@@ -15,6 +15,7 @@ public static class MauiProgram
 			});
 
 		builder.Services.AddMauiBlazorWebView();
+        builder.Services.AddSingleton<JournalApp.Data.AppDatabase>();
         builder.Services.AddSingleton<JournalApp.Services.IJournalsServices, JournalApp.Services.JournalsServices>();
 		builder.Services.AddSingleton<JournalApp.Services.ITagsServices, JournalApp.Services.TagsServices>();
 		builder.Services.AddSingleton<JournalApp.Services.IJournalTagsServices, JournalApp.Services.JournalTagsServices>();
