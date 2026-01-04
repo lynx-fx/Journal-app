@@ -4,6 +4,40 @@
 @inject IJournalsServices JournalsService
 @inject NavigationManager NavigationManager
 
+<style>
+    .search-container {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        padding: 0 4px;
+    }
+    .search-select {
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        background: white;
+        cursor: pointer;
+    }
+    .search-input {
+        flex: 1;
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        outline: none;
+    }
+    .search-input:focus {
+        border-color: #6200ea;
+    }
+    .clear-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #666;
+        font-size: 1.2em;
+        padding: 0 8px;
+    }
+</style>
+
 <div class="calendar-container">
     <div class="calendar-header">
         <div class="header-left">
@@ -30,6 +64,18 @@
     @if (IsListView)
     {
         <div class="timeline-view">
+            <div class="search-container">
+                <select @bind="FilterType" class="search-select">
+                    <option value="Content">Content</option>
+                    <option value="Tags">Tags</option>
+                    <option value="Mood">Mood</option>
+                </select>
+                <input @bind="SearchQuery" @bind:event="oninput" @onkeyup="HandleSearchInput" placeholder="Search..." class="search-input" />
+                @if (!string.IsNullOrWhiteSpace(SearchQuery))
+                {
+                    <button class="clear-btn" @onclick="ClearSearch">✖</button>
+                }
+            </div>
             @foreach (var entry in TimelineEntries)
             {
                 <div class="timeline-card" @onclick="() => OpenJournal(entry.Date)">
@@ -50,7 +96,10 @@
                 </div>
             }
             
-            <button class="load-more-btn" @onclick="LoadMoreEntries">Load More</button>
+            @if (!IsSearching)
+            {
+                <button class="load-more-btn" @onclick="LoadMoreEntries">Load More</button>
+            }
         </div>
     }
     else
@@ -99,6 +148,40 @@
     private bool IsListView { get; set; } = true;
     private int CurrentPage { get; set; } = 0;
     private const int PageSize = 10;
+    
+    // Search
+    private string SearchQuery { get; set; } = "";
+    private string FilterType { get; set; } = "Content";
+    private bool IsSearching => !string.IsNullOrWhiteSpace(SearchQuery);
+
+    private async Task HandleSearchInput(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await PerformSearch();
+        }
+        else if (string.IsNullOrWhiteSpace(SearchQuery))
+        {
+             // Auto-clear if empty
+             await ClearSearch();
+        }
+    }
+
+    private async Task PerformSearch()
+    {
+        if (string.IsNullOrWhiteSpace(SearchQuery)) return;
+
+        TimelineEntries = await JournalsService.SearchJournalsAsync(SearchQuery, FilterType);
+    }
+
+    private async Task ClearSearch()
+    {
+        SearchQuery = "";
+        CurrentPage = 0;
+        TimelineEntries.Clear();
+        await LoadEntries(); // Reload initial page
+        await LoadMoreEntries(); // Load first batch
+    }
 
     private int DaysInMonth => DateTime.DaysInMonth(CurrentMonth.Year, CurrentMonth.Month);
     private int OffsetDays => (int)new DateTime(CurrentMonth.Year, CurrentMonth.Month, 1).DayOfWeek;

@@ -17,17 +17,31 @@ public class TagsServices : ITagsServices
     {
         await _appDatabase.Init();
         
-        if (await _appDatabase.Database.Table<Tags>().CountAsync() == 0)
+        var prebuiltTags = new List<string> 
+        { 
+            "Work", "Career", "Studies", "Family", "Friends", "Relationships", 
+            "Health", "Fitness", "Personal Growth", "Self-care", "Hobbies", "Travel", "Nature", 
+            "Finance", "Spirituality", "Birthday", "Holiday", "Vacation", "Celebration", "Exercise", 
+            "Reading", "Writing", "Cooking", "Meditation", "Yoga", "Music", "Shopping", 
+            "Parenting", "Projects", "Planning", "Reflection" 
+        };
+
+        // Check which ones are missing
+        var existingTags = await _appDatabase.Database.Table<Tags>().ToListAsync();
+        var existingTagNames = existingTags.Select(t => t.Name.ToLower()).ToHashSet();
+
+        var tagsToAdd = new List<Tags>();
+        foreach (var tagName in prebuiltTags)
         {
-            var defaultTags = new List<Tags>
+            if (!existingTagNames.Contains(tagName.ToLower()))
             {
-                new Tags { Name = "Work" },
-                new Tags { Name = "Personal" },
-                new Tags { Name = "Health" },
-                new Tags { Name = "Idea" },
-                new Tags { Name = "Gratitude" }
-            };
-            await _appDatabase.Database.InsertAllAsync(defaultTags);
+                tagsToAdd.Add(new Tags { Name = tagName });
+            }
+        }
+
+        if (tagsToAdd.Any())
+        {
+            await _appDatabase.Database.InsertAllAsync(tagsToAdd);
         }
     }
 

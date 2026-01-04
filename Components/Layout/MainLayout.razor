@@ -13,13 +13,13 @@
 <div class="dynamic-island-container">
     <div class="dynamic-island">
         <NavLink class="nav-item" href="calendar" Match="NavLinkMatch.All">
-            <span role="img" aria-label="Calendar">📅</span>
+            Calendar
         </NavLink>
         <NavLink class="nav-item" href="/" Match="NavLinkMatch.All">
-            <span role="img" aria-label="Today">📝</span>
+            Journal
         </NavLink>
         <button class="nav-item theme-toggle-btn" @onclick="ToggleTheme">
-            <span role="img" aria-label="Theme">@(IsDark ? "☀️" : "🌙")</span>
+            @(IsDark ? "Light" : "Dark")
         </button>
     </div>
 </div>
