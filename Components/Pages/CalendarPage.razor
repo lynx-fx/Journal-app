@@ -6,161 +6,99 @@
 
 <div class="calendar-container">
     <div class="calendar-header">
-        <button class="nav-btn" @onclick="PreviousMonth">❮</button>
-        <h2>@CurrentMonth.ToString("MMMM yyyy")</h2>
-        <button class="nav-btn" @onclick="NextMonth">❯</button>
+        <div class="header-left">
+            @if (!IsListView)
+            {
+                <button class="nav-btn" @onclick="PreviousMonth">❮</button>
+                <h2 style="display:inline-block; margin:0 12px; width: 160px; text-align:center;">
+                    @CurrentMonth.ToString("MMMM yyyy")
+                </h2>
+                <button class="nav-btn" @onclick="NextMonth">❯</button>
+            }
+            else
+            {
+                <h2>My Journal</h2>
+            }
+        </div>
+        
+        <div class="view-toggle">
+            <button class="toggle-option @(!IsListView ? "active" : "")" @onclick="() => SetView(false)">Calendar</button>
+            <button class="toggle-option @(IsListView ? "active" : "")" @onclick="() => SetView(true)">List</button>
+        </div>
     </div>
 
-    <div class="calendar-grid">
-        <div class="weekday">Sun</div>
-        <div class="weekday">Mon</div>
-        <div class="weekday">Tue</div>
-        <div class="weekday">Wed</div>
-        <div class="weekday">Thu</div>
-        <div class="weekday">Fri</div>
-        <div class="weekday">Sat</div>
-
-        @for (int i = 0; i < OffsetDays; i++)
-        {
-            <div class="empty-day"></div>
-        }
-
-        @for (int day = 1; day <= DaysInMonth; day++)
-        {
-            var date = new DateTime(CurrentMonth.Year, CurrentMonth.Month, day);
-            var entry = JournalEntries.FirstOrDefault(j => j.Date.Date == date.Date);
-            var hasEntry = entry != null;
-            var isFuture = date > DateTime.Today;
+    @if (IsListView)
+    {
+        <div class="timeline-view">
+            @foreach (var entry in TimelineEntries)
+            {
+                <div class="timeline-card" @onclick="() => OpenJournal(entry.Date)">
+                    <div class="timeline-date">
+                        <span class="day">@entry.Date.Day</span>
+                        <span class="month">@entry.Date.ToString("MMM")</span>
+                    </div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <span class="weekday">@entry.Date.DayOfWeek</span>
+                            <span class="mood">@GetMoodEmoji(entry.Mood)</span>
+                        </div>
+                        <div class="timeline-preview">
+                            @* Strip HTML for preview *@
+                            @(GetPreviewText(entry.Content))
+                        </div>
+                    </div>
+                </div>
+            }
             
-            <div class="day @(hasEntry ? "has-entry" : "") @(IsToday(date) ? "today" : "") @(isFuture ? "future" : "")" 
-                 @onclick="() => { if (!isFuture) OpenJournal(date); }">
-                <span class="day-number">@day</span>
-                @if (hasEntry && entry != null)
-                {
-                    <span class="mood-indicator">@GetMoodEmoji(entry.Mood)</span>
-                }
-            </div>
-        }
-    </div>
+            <button class="load-more-btn" @onclick="LoadMoreEntries">Load More</button>
+        </div>
+    }
+    else
+    {
+        <div class="calendar-grid">
+            <div class="weekday">Sun</div>
+            <div class="weekday">Mon</div>
+            <div class="weekday">Tue</div>
+            <div class="weekday">Wed</div>
+            <div class="weekday">Thu</div>
+            <div class="weekday">Fri</div>
+            <div class="weekday">Sat</div>
+
+            @for (int i = 0; i < OffsetDays; i++)
+            {
+                <div class="empty-day"></div>
+            }
+
+            @for (int day = 1; day <= DaysInMonth; day++)
+            {
+                var date = new DateTime(CurrentMonth.Year, CurrentMonth.Month, day);
+                var entry = JournalEntries.FirstOrDefault(j => j.Date.Date == date.Date);
+                var hasEntry = entry != null;
+                var isFuture = date > DateTime.Today;
+                
+                <div class="day @(hasEntry ? "has-entry" : "") @(IsToday(date) ? "today" : "") @(isFuture ? "future" : "")" 
+                     @onclick="() => { if (!isFuture) OpenJournal(date); }">
+                    <span class="day-number">@day</span>
+                    @if (hasEntry && entry != null)
+                    {
+                        <span class="mood-indicator">@GetMoodEmoji(entry.Mood)</span>
+                    }
+                </div>
+            }
+        </div>
+    }
 </div>
 
-<style>
-    .calendar-container {
-        padding: 0;
-        max-width: 100%;
-        margin: 0 auto;
-    }
 
-    .calendar-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-        padding: 0 10px;
-    }
-    
-    .calendar-header h2 {
-        font-size: 1.5rem;
-        margin: 0;
-        color: var(--text-primary);
-    }
-
-    .nav-btn {
-        background: var(--card-bg);
-        border: var(--card-border);
-        color: var(--text-primary);
-        font-size: 1.2rem;
-        cursor: pointer;
-        padding: 8px 16px;
-        border-radius: 12px;
-        transition: all 0.2s;
-        box-shadow: var(--card-shadow);
-    }
-    
-    .nav-btn:hover {
-        background: var(--primary-color);
-        color: var(--nav-active-color);
-    }
-
-    .calendar-grid {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 12px;
-    }
-
-    .weekday {
-        text-align: center;
-        font-weight: 600;
-        color: var(--text-secondary);
-        font-size: 0.9rem;
-        padding-bottom: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-
-    .day {
-        aspect-ratio: 1;
-        background: var(--card-bg);
-        border: var(--card-border);
-        border-radius: 16px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-        box-shadow: var(--card-shadow);
-        color: var(--text-primary); /* Ensure text is visible in dark mode */
-    }
-
-    .day:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.08);
-        border-color: var(--primary-color);
-    }
-
-    .day.today {
-        border: 2px solid var(--primary-color);
-        background: var(--primary-light);
-        color: var(--primary-color);
-    }
-
-    .day.has-entry {
-        background: var(--card-bg); /* Keep card bg, use mood for indicator or border */
-    }
-
-    .mood-indicator {
-        font-size: 1.2rem;
-        margin-top: 4px;
-    }
-
-    .day-number {
-        font-weight: 600;
-        font-size: 1rem;
-    }
-    
-    .day.future {
-        opacity: 0.4;
-        cursor: not-allowed;
-        background-color: transparent !important;
-        border: 1px dashed var(--card-border);
-        box-shadow: none;
-    }
-    
-    .day.future:hover {
-        transform: none;
-        box-shadow: none;
-        border-color: var(--card-border);
-    }
-    
-    .empty-day {
-        /* transparent placeholder */
-    }
-</style>
 
 @code {
     private DateTime CurrentMonth { get; set; } = DateTime.Today;
     private List<Journals> JournalEntries { get; set; } = new List<Journals>();
+    private List<Journals> TimelineEntries { get; set; } = new List<Journals>();
+    
+    private bool IsListView { get; set; } = true;
+    private int CurrentPage { get; set; } = 0;
+    private const int PageSize = 10;
 
     private int DaysInMonth => DateTime.DaysInMonth(CurrentMonth.Year, CurrentMonth.Month);
     private int OffsetDays => (int)new DateTime(CurrentMonth.Year, CurrentMonth.Month, 1).DayOfWeek;
@@ -168,19 +106,33 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadEntries();
+        await LoadMoreEntries();
     }
 
     private async Task LoadEntries()
     {
-        // For simplicity, we are fetching all journals. 
-        // In a real app with many years of data, you'd want to filter by month range in the service.
         JournalEntries = await JournalsService.GetJournalsAsync();
+    }
+    
+    private async Task LoadMoreEntries()
+    {
+        var newEntries = await JournalsService.GetJournalsAsync(CurrentPage * PageSize, PageSize);
+        if (newEntries.Any())
+        {
+            TimelineEntries.AddRange(newEntries);
+            CurrentPage++;
+        }
+    }
+
+    private void SetView(bool isList)
+    {
+        IsListView = isList;
     }
 
     private async Task PreviousMonth()
     {
         CurrentMonth = CurrentMonth.AddMonths(-1);
-        await LoadEntries(); // Refresh in case we optimize fetching later
+        await LoadEntries();
     }
 
     private async Task NextMonth()
@@ -208,5 +160,12 @@
             Moods.Positive => "😊",
             _ => "😐"
         };
+    }
+    
+    private string GetPreviewText(string? htmlContent)
+    {
+        if (string.IsNullOrWhiteSpace(htmlContent)) return "No content...";
+        // Simple strip tags for preview
+        return System.Text.RegularExpressions.Regex.Replace(htmlContent, "<.*?>", String.Empty);
     }
 }
