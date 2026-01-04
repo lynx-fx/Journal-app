@@ -1,4 +1,4 @@
-using SQLITE;
+using SQLite;
 
 namespace JournalApp.Models;
 

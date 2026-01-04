@@ -32,7 +32,7 @@ namespace JournalApp.Data
             //Create Tables using CreateTableAsync<T>()
             await _database.CreateTableAsync<Journals>();
             await _database.CreateTableAsync<JournalTags>();
-            await _database.CreateTableAsync<Mood>();
+            await _database.CreateTableAsync<Moods>();
             await _database.CreateTableAsync<Tags>();
             
 
