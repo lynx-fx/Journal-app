@@ -24,7 +24,24 @@
     </div>
 
     <script src="_framework/blazor.webview.js" autostart="false"></script>
-
+    <script>
+        window.editorHelpers = {
+            execFormat: function(command, value) {
+                document.execCommand(command, false, value);
+                // Ensure focus remains
+                const editor = document.querySelector('.journal-editor-wysiwyg');
+                if (editor) editor.focus();
+            },
+            getContent: function(element) {
+                return element.innerHTML;
+            },
+            setContent: function(element, content) {
+                if (element && element.innerHTML !== content) {
+                    element.innerHTML = content;
+                }
+            }
+        };
+    </script>
 </body>
 
 </html>
