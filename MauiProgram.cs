@@ -20,6 +20,8 @@ public static class MauiProgram
 		builder.Services.AddSingleton<JournalApp.Services.ITagsServices, JournalApp.Services.TagsServices>();
 		builder.Services.AddSingleton<JournalApp.Services.IJournalTagsServices, JournalApp.Services.JournalTagsServices>();
 		builder.Services.AddScoped<JournalApp.Services.IThemeService, JournalApp.Services.ThemeService>();
+        builder.Services.AddScoped<JournalApp.Services.IUsersService, JournalApp.Services.UsersService>();
+        builder.Services.AddScoped<JournalApp.Services.IMoodsService, JournalApp.Services.MoodsService>();
 
 #if DEBUG
 		builder.Services.AddBlazorWebViewDeveloperTools();

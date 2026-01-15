@@ -10,11 +10,18 @@ public class Journals
     [Unique]
     public DateTime Date { get; set; }
 
-    public String Content { get; set; }
+    public String Content { get; set; } = String.Empty;
 
+    // Primary mood
     public Moods Mood { get; set; }
 
-    public bool IsPinned { get; set; }
+    // secondary 1st mood
+    public Moods? SecondaryMoodOne { get; set; }
+
+    // secondary 2nd mood
+    public Moods? SecondaryMoodTwo { get; set; }
+
+    public int? MoodDetailId { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdateAt { get; set; }
