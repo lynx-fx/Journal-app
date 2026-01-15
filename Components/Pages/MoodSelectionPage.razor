@@ -1,0 +1,192 @@
+@page "/moods/{Date:datetime}"
+@using JournalApp.Models
+@using JournalApp.Services
+@inject IJournalsServices JournalsService
+@inject IMoodsService MoodsService
+@inject NavigationManager NavManager
+
+<div class="mood-page">
+    <div class="header">
+        <button class="btn-back" @onclick="GoBack">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+            </svg>
+        </button>
+        <h2>How are you feeling?</h2>
+        <div style="width: 24px;"></div> <!-- Spacer -->
+    </div>
+
+    @if (IsLoading)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <!-- Primary Mood Section (Category) -->
+        <div class="section">
+            <h3>Primary Mood</h3>
+            <p class="subtitle">How was your day overall?</p>
+            
+            <div class="mood-categories">
+                @foreach (var category in Enum.GetValues(typeof(Moods)).Cast<Moods>())
+                {
+                    <button class="mood-category-btn @(CurrentJournal.Mood == category ? "active" : "")" 
+                            @onclick="() => SelectCategory(category)">
+                        @category.ToString()
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- Secondary Moods Section (Details) -->
+        <div class="section">
+            <div class="section-header">
+                <div>
+                    <h3>Specific Feelings</h3>
+                    <p class="subtitle">Select up to 2</p>
+                </div>
+                <!-- Custom Add Button -->
+                 <button class="add-mood-btn small" @onclick="() => ShowAddMood = !ShowAddMood">
+                    +
+                </button>
+            </div>
+            
+             @if (ShowAddMood)
+            {
+                <div class="add-mood-inline" style="margin-bottom: 16px;">
+                    <input class="mini-input" @bind="NewMoodName" placeholder="Name" />
+                    <input class="mini-input emoji-input" @bind="NewMoodEmoji" placeholder="😊" />
+                    <button class="btn-mini-save" @onclick="AddNewMood">Save</button>
+                </div>
+            }
+
+            <div class="mood-detail-list">
+                @foreach (var mood in FilteredMoods)
+                {
+                    <button class="mood-chip @(IsSelected(mood.Id) ? "selected" : "")" 
+                            @onclick="() => ToggleMood(mood.Id)">
+                        <span class="mood-emoji">@mood.Emoji</span>
+                        <span class="mood-name">@mood.Name</span>
+                    </button>
+                }
+            </div>
+        </div>
+
+        <button class="btn btn-primary done-btn" @onclick="SaveAndClose">Done</button>
+    }
+</div>
+
+@code {
+    [Parameter] public DateTime Date { get; set; }
+
+    private Journals CurrentJournal { get; set; } = new Journals();
+    private List<MoodDetail> FilteredMoods { get; set; } = new List<MoodDetail>();
+    private bool IsLoading = true;
+    
+    // Add Mood Logic
+    private bool ShowAddMood = false;
+    private string NewMoodName = "";
+    private string NewMoodEmoji = "🙂";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        IsLoading = true;
+        CurrentJournal = await JournalsService.GetJournalAsync(Date) ?? new Journals { Date = Date };
+        
+        // Load details for the current category
+        await LoadMoodsForCategory(CurrentJournal.Mood);
+
+        IsLoading = false;
+    }
+
+    private async Task SelectCategory(Moods category)
+    {
+        if (CurrentJournal.Mood != category)
+        {
+            CurrentJournal.Mood = category;
+            // Clear details when switching category? 
+            // User might want to keep "Happy" if they accidentally clicked Neutral?
+            // Usually switching category implies different set of moods. Let's clear to be safe/clean.
+            CurrentJournal.MoodDetailId = null;
+            CurrentJournal.SecondaryMoodDetailId1 = null;
+            CurrentJournal.SecondaryMoodDetailId2 = null; // Ensure unused one is clear
+            
+            await LoadMoodsForCategory(category);
+        }
+    }
+
+    private async Task LoadMoodsForCategory(Moods category)
+    {
+        FilteredMoods = await MoodsService.GetMoodsByCategoryAsync(category);
+    }
+
+    private bool IsSelected(int id)
+    {
+        return CurrentJournal.MoodDetailId == id || CurrentJournal.SecondaryMoodDetailId1 == id;
+    }
+
+    private void ToggleMood(int id)
+    {
+        // 1. Check if already selected -> Remove
+        if (CurrentJournal.MoodDetailId == id)
+        {
+            CurrentJournal.MoodDetailId = null;
+            // Shift secondary to primary to avoid gaps? Not strictly necessary but cleaner UI often.
+            if (CurrentJournal.SecondaryMoodDetailId1 != null)
+            {
+                CurrentJournal.MoodDetailId = CurrentJournal.SecondaryMoodDetailId1;
+                CurrentJournal.SecondaryMoodDetailId1 = null;
+            }
+            return;
+        }
+        if (CurrentJournal.SecondaryMoodDetailId1 == id)
+        {
+            CurrentJournal.SecondaryMoodDetailId1 = null;
+            return;
+        }
+
+        // 2. Add (if slots available)
+        if (CurrentJournal.MoodDetailId == null)
+        {
+            CurrentJournal.MoodDetailId = id;
+        }
+        else if (CurrentJournal.SecondaryMoodDetailId1 == null)
+        {
+            CurrentJournal.SecondaryMoodDetailId1 = id;
+        }
+        else
+        {
+            // Full (2 selected). Replace logic? or Denial?
+            // Let's Replace the second one (FIFOish or override) for smoother UX than blocking.
+            CurrentJournal.SecondaryMoodDetailId1 = id; 
+        }
+    }
+    
+    private async Task AddNewMood()
+    {
+        if (!string.IsNullOrWhiteSpace(NewMoodName))
+        {
+             var newMood = new MoodDetail 
+            { 
+                Name = NewMoodName, 
+                Emoji = NewMoodEmoji, 
+                Category = CurrentJournal.Mood 
+            };
+            await MoodsService.AddCustomMoodAsync(newMood);
+            await LoadMoodsForCategory(CurrentJournal.Mood);
+            ShowAddMood = false;
+            NewMoodName = "";
+        }
+    }
+
+    private async Task SaveAndClose()
+    {
+        await JournalsService.SaveJournalAsync(CurrentJournal);
+        GoBack();
+    }
+
+    private void GoBack()
+    {
+        NavManager.NavigateTo($"/journal/{Date:yyyy-MM-dd}");
+    }
+}

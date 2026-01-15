@@ -1,0 +1,140 @@
+@page "/"
+@using JournalApp.Services
+@inject IAnalyticsService AnalyticsService
+@inject NavigationManager NavManager
+
+<div class="dashboard-page">
+     <div class="header">
+        <h2>Your Insights</h2>
+         <div style="width: 24px;"></div>
+    </div>
+
+    @if (IsLoading)
+    {
+        <div class="loading">Analyzing your journey...</div>
+    }
+    else
+    {
+        <!-- Streak Card -->
+        <div class="card streak-card">
+            <div class="streak-visual">
+                <span class="fire-icon">🔥</span>
+                <span class="streak-count">@Streak.CurrentStreak</span>
+                <span class="streak-label">Day Streak</span>
+            </div>
+            <div class="streak-stats">
+                <div class="stat-item">
+                    <span class="stat-value">@Streak.LongestStreak</span>
+                    <span class="stat-name">Longest</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">@Streak.TotalEntries</span>
+                    <span class="stat-name">Total Entries</span>
+                </div>
+            </div>
+            
+             @if (Streak.MissedDays.Any())
+            {
+                <div class="missed-days">
+                    <span class="missed-label">Recently Missed:</span>
+                    <div class="missed-dates">
+                        @foreach (var d in Streak.MissedDays)
+                        {
+                            <span class="missed-chip">@d.ToString("MMM dd")</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Mood Distribution -->
+        <div class="card mood-breakdown-card">
+             <h3>Mood Distribution</h3>
+             <div class="mood-bars">
+                 @foreach (var m in MoodDist)
+                 {
+                     <div class="mood-bar-row">
+                         <span class="mood-cat-label">@m.Category</span>
+                         <div class="progress-bg">
+                             <div class="progress-fill @m.Category.ToString().ToLower()" style="width: @m.Percentage%;"></div>
+                         </div>
+                         <span class="mood-percent">@m.Percentage%</span>
+                     </div>
+                 }
+             </div>
+        </div>
+        
+        <!-- Top Feelings -->
+        <div class="card top-moods-card">
+            <h3>Top Feelings</h3>
+            <div class="top-list">
+                @foreach (var item in TopMoods)
+                {
+                    <div class="top-item">
+                        <span class="top-emoji">@item.Emoji</span>
+                        <span class="top-name">@item.Name</span>
+                        <span class="top-count">@item.Count</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Top Tags -->
+        <div class="card top-tags-card">
+            <h3>Frequent Tags</h3>
+            <div class="tags-cloud">
+               @foreach (var t in TopTags)
+               {
+                   <span class="tag-chip">#@t.Key <small>(@t.Value)</small></span>
+               }
+            </div>
+        </div>
+        
+         <!-- Word Count Trend -->
+        <div class="card trend-card">
+            <h3>Word Volume</h3>
+            <div class="trend-bars">
+               @foreach (var w in WordTrend)
+               {
+                   var h = MaxWordCount > 0 ? (w.Value / (double)MaxWordCount) * 100 : 0;
+                   if (h < 5) h = 5; 
+                   
+                   <div class="trend-bar-col" title="@w.Key.ToString("MMM dd"): @w.Value words">
+                       <div class="trend-bar" style="height: @h%;"></div>
+                       <span class="trend-date">@w.Key.ToString("dd")</span>
+                   </div>
+               }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool IsLoading = true;
+    private StreakData Streak { get; set; } = new();
+    private List<MoodStats> MoodDist { get; set; } = new();
+    private List<MoodDetailStat> TopMoods { get; set; } = new();
+    private List<KeyValuePair<string, int>> TopTags { get; set; } = new();
+    private List<KeyValuePair<DateTime, int>> WordTrend { get; set; } = new();
+    private int MaxWordCount = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+        
+        Streak = await AnalyticsService.GetStreakDataAsync();
+        MoodDist = await AnalyticsService.GetMoodDistributionAsync();
+        TopMoods = await AnalyticsService.GetTopMoodDetailsAsync();
+        TopTags = await AnalyticsService.GetTopTagsAsync();
+        WordTrend = await AnalyticsService.GetWordCountTrendAsync(14); // Last 2 weeks
+        
+        if (WordTrend.Any()) MaxWordCount = WordTrend.Max(x => x.Value);
+
+        IsLoading = false;
+    }
+
+    private void GoBack()
+    {
+        NavManager.NavigateTo("/");
+    }
+}

@@ -1,11 +1,11 @@
 using JournalApp.Models;
-using SQLite;
 using JournalApp.Data;
 
 namespace JournalApp.Services;
 
 public class JournalsServices : IJournalsServices
 {
+
     private readonly AppDatabase _appDatabase;
 
     public JournalsServices(AppDatabase appDatabase)

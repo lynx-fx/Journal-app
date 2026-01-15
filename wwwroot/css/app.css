@@ -1,48 +1,55 @@
 ﻿:root {
-    /* iOS Inspired Palette */
-    --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    /* Journal Theme - Sage & Mono */
+    --font-stack: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     
-    /* Light Mode */
-    --bg-gradient: linear-gradient(135deg, #F0F4F8 0%, #D9E2EC 100%); /* Subtle cool grey gradient */
-    --card-bg: #FFFFFF;
-    --text-primary: #102A43;
-    --text-secondary: #486581; /* System Gray */
-    --primary-color: #007AFF; /* System Blue */
-    --primary-hover: #0062cc;
-    --danger-color: #FF3B30; /* System Red */
+    /* Light Mode - Sage Calm */
+    /* Cream to Soft Sage Gradient */
+    --bg-gradient: linear-gradient(180deg, #F4F4EB 0%, #E2E8D8 100%);
     
-    --card-radius: 20px;
-    --card-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --text-primary: #2A3325; /* Dark Green/Black */
+    --text-secondary: #5F6F52; /* Olive */
+    --primary-color: #4A5D44; /* Deep Olive */
+    --primary-hover: #364432;
+    --danger-color: #BC4749;
     
-    --input-bg: rgba(255,255,255,0.8);
+    --card-radius: 24px;
+    --card-shadow: 0 10px 30px -5px rgba(42, 51, 37, 0.08); /* Soft organic shadow */
+    
+    --input-bg: rgba(95, 111, 82, 0.08);
     --input-focus-bg: #FFFFFF;
+    --input-border: rgba(74, 93, 68, 0.2);
     
-    --mood-bg: rgba(255,255,255,0.6);
+    --mood-bg: rgba(95, 111, 82, 0.1);
     --mood-selected-bg: #FFFFFF;
     
-    --island-bg: rgba(30, 30, 30, 0.85); /* Smooth dark blur */
-    --nav-active: #FFFFFF;
-    --nav-inactive: #8E8E93;
+    --island-bg: rgba(255, 255, 255, 0.95);
+    --nav-active: #4A5D44;
+    --nav-inactive: #A9B388; /* Muted Sage */
 }
 
 [data-theme='dark'] {
-    /* Dark Mode */
-    --bg-gradient: linear-gradient(135deg, #141E30 0%, #243B55 100%); /* Deep refined blue-black */
-    --card-bg: rgba(30, 30, 35, 0.7); /* Translucent dark cards */
-    --text-primary: #FFFFFF;
-    --text-secondary: #BCCCDC;
-    --primary-color: #339AF0; /* Light Blue */
-    --primary-hover: #1C7ED6;
+    /* Dark Mode - Midnight Slate */
+    --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); /* Deep Navy to Slate */
     
-    --card-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    --card-bg: rgba(30, 41, 59, 0.7); /* Slate 800 with transparency */
+    --text-primary: #F8FAFC; /* Slate 50 */
+    --text-secondary: #94A3B8; /* Slate 400 */
+    --primary-color: #60A5FA; /* Blue 400 */
+    --primary-hover: #3B82F6; /* Blue 500 */
     
-    --input-bg: rgba(0,0,0,0.3);
-    --input-focus-bg: rgba(0,0,0,0.5);
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
     
-    --mood-bg: rgba(255,255,255,0.05);
-    --mood-selected-bg: rgba(255,255,255,0.15);
+    --input-bg: rgba(15, 23, 42, 0.6);
+    --input-focus-bg: #1E293B;
+    --input-border: rgba(148, 163, 184, 0.2);
     
-    --island-bg: rgba(20, 20, 20, 0.9);
+    --mood-bg: rgba(15, 23, 42, 0.5);
+    --mood-selected-bg: #334155;
+    
+    --island-bg: rgba(15, 23, 42, 0.85);
+    --nav-active: #60A5FA;
+    --nav-inactive: #64748B;
 }
 
 * {
@@ -99,13 +106,26 @@ h2 {
 
 .btn-primary {
     background-image: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-    color: white;
-    box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+    color: white; /* Default for Light Mode */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] .btn-primary {
+    color: white !important;
+    background-image: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+    background-color: transparent;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
 .btn-primary:hover {
-    box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
-    filter: brightness(1.05);
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+[data-theme='dark'] .btn-primary:hover {
+    background-color: transparent;
+    filter: brightness(1.1);
+    box-shadow: 0 0 15px rgba(96, 165, 250, 0.4);
 }
 
 .btn-danger {
@@ -114,7 +134,7 @@ h2 {
 }
 
 .btn-danger:hover {
-    background-color: rgba(255, 59, 48, 0.1);
+    background-color: rgba(255, 0, 0, 0.05);
 }
 
 /* Cards & Inputs */
@@ -124,16 +144,20 @@ h2 {
     padding: 24px !important;
     box-shadow: var(--card-shadow) !important;
     margin-bottom: 24px;
-    border: none !important;
-    /* Glassmorphism check: if dark mode, backdrop-filter might be nice */
+    border: none !important; /* Reset border */
     backdrop-filter: blur(10px); 
     -webkit-backdrop-filter: blur(10px);
+}
+
+[data-theme='dark'] .card, 
+[data-theme='dark'] .editor-container {
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
 input, textarea {
     width: 100%;
     background-color: var(--input-bg) !important;
-    border: 1px solid transparent !important;
+    border: 1px solid var(--input-border) !important;
     border-radius: 12px !important;
     padding: 14px 16px;
     font-size: 16px;
@@ -147,7 +171,86 @@ input:focus, textarea:focus {
     background-color: var(--input-focus-bg) !important;
     border-color: var(--primary-color) !important;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15) !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important; /* Indigo ring */
+}
+
+/* Mood Summary Card */
+.mood-summary-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    cursor: pointer;
+    border: 1px solid var(--input-border);
+    transition: all 0.2s;
+    box-shadow: var(--card-shadow);
+    backdrop-filter: blur(10px);
+}
+
+.mood-summary-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary-color);
+}
+
+.primary-mood {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.primary-mood .emoji {
+    font-size: 32px;
+    line-height: 1;
+}
+
+.mood-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.mood-info .label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.mood-info .value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.secondary-moods {
+    display: flex;
+    gap: -8px; /* overlap */
+}
+
+.secondary-emoji {
+    font-size: 20px;
+    background: var(--card-bg);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 1px solid var(--input-border);
+    margin-left: -8px;
+}
+
+.secondary-emoji:first-child {
+    margin-left: 0;
+}
+
+.chevron {
+    color: var(--text-secondary);
+    opacity: 0.5;
 }
 
 /* Journal Editor Specifics */
@@ -157,34 +260,126 @@ input:focus, textarea:focus {
     min-height: 250px;
 }
 
-/* Mood Selector */
-.mood-selector {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-    background: transparent !important;
-    padding: 0 !important;
+/* Mood Selector Refactor */
+.mood-section-container {
+    margin-bottom: 24px;
 }
 
-.mood-btn {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: none;
-    background-color: var(--mood-bg) !important;
-    font-size: 20px;
+.mood-categories {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    background: var(--input-bg);
+    padding: 4px;
+    border-radius: 12px;
+    width: fit-content;
+}
+
+.mood-category-btn {
+    padding: 8px 24px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
 }
 
-.mood-btn.selected {
-    background-image: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%) !important;
-    color: white; /* If using text icons */
-    transform: scale(1.1);
-    box-shadow: 0 4px 10px rgba(0, 122, 255, 0.3);
+.mood-category-btn.active {
+    background: var(--card-bg);
+    color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.mood-detail-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.mood-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: var(--card-bg); /* or transparent with border */
+    border: 1px solid var(--input-border);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mood-chip:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary-color);
+}
+
+.mood-chip.selected {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.add-mood-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px dashed var(--text-secondary);
+    background: transparent;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.add-mood-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: var(--input-bg);
+}
+
+.add-mood-inline {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    align-items: center;
+    background: var(--card-bg);
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--input-border);
+}
+
+.mini-input {
+    width: auto !important;
+    padding: 8px !important;
+    font-size: 14px !important;
+    border-radius: 8px !important;
+}
+
+.emoji-input {
+    width: 50px !important;
+    text-align: center;
+}
+
+.btn-mini-save {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-mini-cancel {
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    cursor: pointer;
 }
 
 /* Tags */
@@ -199,15 +394,16 @@ input:focus, textarea:focus {
 .tag-chip {
     display: inline-flex;
     align-items: center;
-    background-image: linear-gradient(135deg, var(--input-bg) 0%, var(--mood-bg) 100%) !important;
+    background-color: var(--input-bg) !important;
     color: var(--text-primary) !important;
+    border: 1px solid var(--input-border);
     padding: 8px 16px;
     border-radius: 100px;
     font-size: 14px;
     font-weight: 500;
     margin-right: 8px;
     margin-bottom: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    box-shadow: none; /* Flatter look */
 }
 
 .remove-tag-btn {
@@ -238,16 +434,23 @@ input:focus, textarea:focus {
 
 .add-tag-btn {
     /* Specific styling if needed, but .btn-secondary or similar usually */
-    background-image: linear-gradient(135deg, var(--mood-selected-bg) 0%, var(--mood-bg) 100%);
-    color: var(--text-primary);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    background-color: var(--mood-bg);
+    color: var(--primary-color);
+    box-shadow: none;
+    border: 1px solid var(--input-border);
+    border-radius: 12px;
     white-space: nowrap;
     padding: 14px 24px; /* Match input height */
     height: 100%;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 .add-tag-btn:hover {
+     background-color: var(--input-focus-bg);
+     border-color: var(--primary-color);
      transform: translateY(-1px);
-     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 /* Dynamic Island Navigation */
@@ -264,66 +467,92 @@ input:focus, textarea:focus {
     align-items: center;
     gap: 8px;
     /* Glassmorphism background */
-    background: rgba(255, 255, 255, 0.1); 
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    padding: 8px 12px;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--island-bg); 
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 10px 16px;
+    border-radius: 32px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 [data-theme='dark'] .dynamic-island {
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--island-bg);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .nav-item {
-    padding: 8px 16px;
-    border-radius: 12px;
+    padding: 10px;
+    border-radius: 50%; /* Circle for icons */
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 24px; /* Icon size */
     color: var(--nav-inactive);
-    text-decoration: none;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     background: transparent;
     border: none;
     cursor: pointer;
-    /* Text specific */
-    height: auto;
-    width: auto;
+    width: 48px;
+    height: 48px;
+    position: relative;
 }
 
 .nav-item:hover {
-    color: var(--text-primary);
-    background-color: rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
+    color: var(--primary-color);
+    background-color: var(--mood-bg);
+    transform: translateY(-3px);
 }
 
 .nav-item.active {
-    background-color: var(--primary-color);
-    color: white;
-    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+    background-color: transparent;
+    color: var(--nav-active);
+}
+
+.nav-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background-color: var(--nav-active);
+    border-radius: 50%;
 }
 
 /* Theme Toggle Special Styling inside Island */
 .theme-toggle-btn {
-    border-left: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    margin-left: 8px;
-    padding-left: 16px;
-    /* Reset from previous special shape */
-    border-top-right-radius: 12px;
-    border-bottom-right-radius: 12px;
+    border-left: 1px solid var(--input-border);
+    margin-left: 12px;
+    padding-left: 12px; /* Extra padding for separation */
+    border-radius: 0;
     width: auto;
+    height: 32px; /* Divider height */
+    display: flex;
+    align-items: center;
 }
 
-.theme-toggle-btn:hover {
-     background-color: rgba(255, 255, 255, 0.1);
-     transform: translateY(-2px);
+.theme-toggle-icon-btn {
+    background: transparent;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 20px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-toggle-icon-btn:hover {
+    background-color: var(--mood-bg);
+    color: var(--primary-color);
+    transform: rotate(15deg);
 }
 
 /* Calendar Overrides */
@@ -381,6 +610,13 @@ input:focus, textarea:focus {
     align-items: center;
     flex-wrap: wrap;
     gap: 15px;
+}
+
+/* Actions */
+.actions {
+    margin-top: 32px;
+    display: flex;
+    gap: 12px;
 }
 
 /* Editor Toolbar */
@@ -448,17 +684,24 @@ input:focus, textarea:focus {
     border: none !important;
     outline: none !important;
     cursor: pointer;
-    font-size: 14px;
-    font-weight: 600; /* Apple-like bold icons */
+    font-size: 15px; /* Slightly larger */
+    font-weight: 700; 
     padding: 6px 10px;
     border-radius: 6px;
-    color: var(--text-secondary);
-    transition: background 0.2s, color 0.2s;
+    color: var(--text-primary); /* Use primary text for better contrast */
+    opacity: 0.7; /* differentiate from active text */
+    transition: all 0.2s;
     height: 32px;
     min-width: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.toolbar-btn:hover {
+    background: var(--input-focus-bg);
+    color: var(--primary-color);
+    opacity: 1;
 }
 
 .toolbar-btn:hover {

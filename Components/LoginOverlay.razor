@@ -1,0 +1,98 @@
+@using JournalApp.Services
+@inject IUsersService UsersService
+
+<div class="login-overlay">
+    <div class="login-container">
+        <h2>@(IsSetupMode ? "Create PIN" : "Welcome Back")</h2>
+        <p>@(IsSetupMode ? "Set a 4-digit PIN to secure your journal" : "Enter your PIN to unlock")</p>
+        
+        <div class="pin-display">
+            @for (int i = 0; i < 4; i++)
+            {
+                <div class="pin-dot @(Pin.Length > i ? "filled" : "") @(IsError ? "error" : "")"></div>
+            }
+        </div>
+
+        <div class="keypad">
+            @for (int i = 1; i <= 9; i++)
+            {
+                var num = i;
+                <button class="key-btn" @onclick="() => AppendNumber(num)">@num</button>
+            }
+            <button class="key-btn action-btn" @onclick="ClearPin">C</button>
+            <button class="key-btn" @onclick="() => AppendNumber(0)">0</button>
+            <button class="key-btn action-btn" @onclick="Backspace">⌫</button>
+        </div>
+        
+        @if (IsError)
+        {
+            <p class="error-msg">Incorrect PIN</p>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnLoginSuccess { get; set; }
+
+    private string Pin = "";
+    private bool IsSetupMode = false;
+    private bool IsError = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsSetupMode = !await UsersService.HasPinAsync();
+    }
+
+    private async Task AppendNumber(int number)
+    {
+        if (Pin.Length < 4)
+        {
+            IsError = false;
+            Pin += number.ToString();
+            
+            if (Pin.Length == 4)
+            {
+                await ValidatePin();
+            }
+        }
+    }
+
+    private void Backspace()
+    {
+        if (Pin.Length > 0)
+        {
+            IsError = false;
+            Pin = Pin.Substring(0, Pin.Length - 1);
+        }
+    }
+
+    private void ClearPin()
+    {
+        IsError = false;
+        Pin = "";
+    }
+
+    private async Task ValidatePin()
+    {
+        await Task.Delay(300); // Visual delay to see the last dot
+
+        if (IsSetupMode)
+        {
+            await UsersService.SavePinAsync(Pin);
+            await OnLoginSuccess.InvokeAsync();
+        }
+        else
+        {
+            var isValid = await UsersService.ValidatePinAsync(Pin);
+            if (isValid)
+            {
+                await OnLoginSuccess.InvokeAsync();
+            }
+            else
+            {
+                IsError = true;
+                Pin = ""; // Reset
+            }
+        }
+    }
+}

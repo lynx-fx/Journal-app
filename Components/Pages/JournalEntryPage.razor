@@ -15,13 +15,22 @@
     }
     <div class="header">
         <h2>@(EntryDate.ToShortDateString())</h2>
-        <div class="mood-selector">
-            @foreach (var mood in Enum.GetValues(typeof(Moods)).Cast<Moods>())
-            {
-                <button class="mood-btn @(CurrentJournal.Mood == mood ? "selected" : "")" @onclick="() => SetMood(mood)">
-                    @GetMoodEmoji(mood)
-                </button>
-            }
+    </div>
+
+    <!-- Mood Summary Card -->
+    <div class="mood-summary-card" @onclick="NavigateToMoods">
+        <div class="primary-mood">
+            <span class="emoji">@CategoryEmoji</span>
+            <div class="mood-info">
+                <span class="label">@CurrentJournal.Mood.ToString()</span>
+                <span class="value">@GetMoodDetailsString()</span>
+            </div>
+        </div>
+        
+        <div class="chevron">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
         </div>
     </div>
 
@@ -148,6 +157,17 @@
             // Load Tags
             await TagsService.Init();
             AvailableTags = await TagsService.GetTagsAsync();
+            
+            // Load Moods (Detail 1 and Detail 2)
+            if (CurrentJournal.MoodDetailId.HasValue)
+                Detail1 = await MoodsService.GetMoodByIdAsync(CurrentJournal.MoodDetailId.Value);
+            else 
+                Detail1 = null;
+            
+            if (CurrentJournal.SecondaryMoodDetailId1.HasValue)
+                Detail2 = await MoodsService.GetMoodByIdAsync(CurrentJournal.SecondaryMoodDetailId1.Value);
+            else
+                Detail2 = null;
 
             if (CurrentJournal.Id != 0)
             {
@@ -167,12 +187,36 @@
         }
     }
 
-    private void SetMood(Moods mood)
+    private MoodDetail? Detail1;
+    private MoodDetail? Detail2;
+
+    private string CategoryEmoji => GetCategoryEmoji(CurrentJournal.Mood);
+    
+    // Shows "Happy, Excited" or "No specific mood"
+    private string GetMoodDetailsString()
     {
-        CurrentJournal.Mood = mood;
+        var names = new List<string>();
+        if (Detail1 != null) names.Add($"{Detail1.Emoji} {Detail1.Name}");
+        if (Detail2 != null) names.Add($"{Detail2.Emoji} {Detail2.Name}");
+        
+        return names.Any() ? string.Join(", ", names) : "Select details...";
     }
 
-    private string GetMoodEmoji(Moods mood)
+    [Inject] IMoodsService MoodsService { get; set; }
+
+    private void NavigateToMoods()
+    {
+        _ = SaveAndNavigate();
+    }
+
+    private async Task SaveAndNavigate()
+    {
+        await UpdateContentModel();
+        await JournalsService.SaveJournalAsync(CurrentJournal);
+        NavigationManager.NavigateTo($"/moods/{EntryDate:yyyy-MM-dd}");
+    }
+
+    private string GetCategoryEmoji(Moods mood)
     {
         return mood switch
         {
