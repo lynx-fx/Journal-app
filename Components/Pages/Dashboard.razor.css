@@ -1,0 +1,246 @@
+.dashboard-page {
+    padding-bottom: 80px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.btn-back {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+}
+
+.btn-back:hover {
+    background: var(--input-bg);
+}
+
+.card {
+    background: var(--card-bg);
+    border-radius: var(--card-radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--card-shadow);
+    backdrop-filter: blur(10px);
+}
+
+[data-theme='dark'] .card {
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.card h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 18px;
+    color: var(--text-primary);
+}
+
+/* Streak Card */
+.streak-card {
+    background: linear-gradient(135deg, var(--card-bg), rgba(96, 165, 250, 0.1));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.streak-visual {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.fire-icon {
+    font-size: 48px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.8; }
+}
+
+.streak-count {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--primary-color);
+}
+
+.streak-label {
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.streak-stats {
+    display: flex;
+    width: 100%;
+    justify-content: space-around;
+    margin-bottom: 16px;
+    border-top: 1px solid var(--input-border);
+    padding-top: 16px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.stat-name {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.missed-days {
+    width: 100%;
+    text-align: center;
+}
+
+.missed-label {
+    font-size: 12px;
+    color: var(--danger-color);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.missed-dates {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.missed-chip {
+    font-size: 10px;
+    background: rgba(188, 71, 73, 0.1);
+    color: var(--danger-color);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Mood Bars */
+.mood-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.mood-cat-label {
+    width: 70px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.progress-bg {
+    flex: 1;
+    height: 8px;
+    background: var(--input-bg);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 4px;
+}
+
+.progress-fill.positive { background: #4ADE80; }
+.progress-fill.neutral { background: #94A3B8; }
+.progress-fill.negative { background: #F87171; }
+
+.mood-percent {
+    width: 40px;
+    text-align: right;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* Top Feelings */
+.top-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.top-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--input-bg);
+    padding: 10px 16px;
+    border-radius: 12px;
+}
+
+.top-emoji { font-size: 20px; margin-right: 12px; }
+.top-name { flex: 1; font-weight: 600; }
+.top-count { font-weight: 700; color: var(--primary-color); }
+
+/* Tags */
+.tags-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag-chip {
+    background: var(--input-bg);
+    color: var(--primary-color);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Trend Bars */
+.trend-bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 120px;
+    padding-top: 20px;
+}
+
+.trend-bar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.trend-bar {
+    width: 8px;
+    background: var(--primary-color);
+    border-radius: 4px;
+    opacity: 0.7;
+    transition: all 0.2s;
+}
+
+.trend-bar:hover {
+    opacity: 1;
+    transform: scaleX(1.5);
+}
+
+.trend-date {
+    font-size: 10px;
+    color: var(--text-secondary);
+}
