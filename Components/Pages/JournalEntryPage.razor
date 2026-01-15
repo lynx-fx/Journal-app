@@ -17,45 +17,21 @@
         <h2>@(EntryDate.ToShortDateString())</h2>
     </div>
 
-    <!-- Mood Section -->
-    <div class="mood-section-container">
-        <!-- Row 1: Category Selector -->
-        <div class="mood-categories">
-            @foreach (var category in Enum.GetValues(typeof(Moods)).Cast<Moods>())
-            {
-                <button class="mood-category-btn @(CurrentJournal.Mood == category ? "active" : "")" 
-                        @onclick="() => SelectCategory(category)">
-                    @category.ToString()
-                </button>
-            }
-        </div>
-
-        <!-- Row 2: Detailed Moods -->
-        <div class="mood-detail-list">
-            @foreach (var mood in AvailableMoods)
-            {
-                <button class="mood-chip @(CurrentJournal.MoodDetailId == mood.Id ? "selected" : "")" 
-                        @onclick="() => SelectMoodDetail(mood)">
-                    <span class="mood-emoji">@mood.Emoji</span>
-                    <span class="mood-name">@mood.Name</span>
-                </button>
-            }
-            
-            <!-- Add Custom Mood Button -->
-            <button class="add-mood-btn" @onclick="() => ShowAddMood = true">
-                +
-            </button>
+    <!-- Mood Summary Card -->
+    <div class="mood-summary-card" @onclick="NavigateToMoods">
+        <div class="primary-mood">
+            <span class="emoji">@CategoryEmoji</span>
+            <div class="mood-info">
+                <span class="label">@CurrentJournal.Mood.ToString()</span>
+                <span class="value">@GetMoodDetailsString()</span>
+            </div>
         </div>
         
-        @if (ShowAddMood)
-        {
-            <div class="add-mood-inline">
-                <input class="mini-input" @bind="NewMoodName" placeholder="Name (e.g. Joyful)" />
-                <input class="mini-input emoji-input" @bind="NewMoodEmoji" placeholder="😊" />
-                <button class="btn-mini-save" @onclick="AddNewMood">Save</button>
-                <button class="btn-mini-cancel" @onclick="() => ShowAddMood = false">Cancel</button>
-            </div>
-        }
+        <div class="chevron">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
+        </div>
     </div>
 
     <div class="editor-container">
@@ -182,8 +158,16 @@
             await TagsService.Init();
             AvailableTags = await TagsService.GetTagsAsync();
             
-            // Load Moods
-            await LoadMoodsForCategory(CurrentJournal.Mood);
+            // Load Moods (Detail 1 and Detail 2)
+            if (CurrentJournal.MoodDetailId.HasValue)
+                Detail1 = await MoodsService.GetMoodByIdAsync(CurrentJournal.MoodDetailId.Value);
+            else 
+                Detail1 = null;
+            
+            if (CurrentJournal.SecondaryMoodDetailId1.HasValue)
+                Detail2 = await MoodsService.GetMoodByIdAsync(CurrentJournal.SecondaryMoodDetailId1.Value);
+            else
+                Detail2 = null;
 
             if (CurrentJournal.Id != 0)
             {
@@ -203,53 +187,44 @@
         }
     }
 
-    private void SetMood(Moods mood)
-    {
-        CurrentJournal.Mood = mood;
-        // Don't clear detail ID if it belongs to same category, but here we enforce workflow: Category -> Detail
-    }
+    private MoodDetail? Detail1;
+    private MoodDetail? Detail2;
 
-    private List<MoodDetail> AvailableMoods { get; set; } = new List<MoodDetail>();
-    private bool ShowAddMood = false;
-    private string NewMoodName = "";
-    private string NewMoodEmoji = "🙂";
+    private string CategoryEmoji => GetCategoryEmoji(CurrentJournal.Mood);
+    
+    // Shows "Happy, Excited" or "No specific mood"
+    private string GetMoodDetailsString()
+    {
+        var names = new List<string>();
+        if (Detail1 != null) names.Add($"{Detail1.Emoji} {Detail1.Name}");
+        if (Detail2 != null) names.Add($"{Detail2.Emoji} {Detail2.Name}");
+        
+        return names.Any() ? string.Join(", ", names) : "Select details...";
+    }
 
     [Inject] IMoodsService MoodsService { get; set; }
 
-    private async Task SelectCategory(Moods category)
+    private void NavigateToMoods()
     {
-        CurrentJournal.Mood = category;
-        CurrentJournal.MoodDetailId = null; // Reset detail when switching core category
-        await LoadMoodsForCategory(category);
+        _ = SaveAndNavigate();
     }
 
-    private void SelectMoodDetail(MoodDetail mood)
+    private async Task SaveAndNavigate()
     {
-        CurrentJournal.MoodDetailId = mood.Id;
-        // Ensure category matches (should already)
-        CurrentJournal.Mood = mood.Category;
+        await UpdateContentModel();
+        await JournalsService.SaveJournalAsync(CurrentJournal);
+        NavigationManager.NavigateTo($"/moods/{EntryDate:yyyy-MM-dd}");
     }
 
-    private async Task LoadMoodsForCategory(Moods category)
+    private string GetCategoryEmoji(Moods mood)
     {
-        AvailableMoods = await MoodsService.GetMoodsByCategoryAsync(category);
-    }
-
-    private async Task AddNewMood()
-    {
-        if (!string.IsNullOrWhiteSpace(NewMoodName))
+        return mood switch
         {
-            var newMood = new MoodDetail 
-            { 
-                Name = NewMoodName, 
-                Emoji = NewMoodEmoji, 
-                Category = CurrentJournal.Mood 
-            };
-            await MoodsService.AddCustomMoodAsync(newMood);
-            await LoadMoodsForCategory(CurrentJournal.Mood);
-            ShowAddMood = false;
-            NewMoodName = "";
-        }
+            Moods.Negative => "😔",
+            Moods.Neutral => "😐",
+            Moods.Positive => "😊",
+            _ => "😐"
+        };
     }
     
     private async Task AddTag()

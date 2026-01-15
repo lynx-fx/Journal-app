@@ -1,0 +1,83 @@
+.mood-page {
+    padding-bottom: 40px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.btn-back {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-back:hover {
+    background: var(--input-bg);
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.section {
+    background: var(--card-bg);
+    padding: 24px;
+    border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 24px;
+    backdrop-filter: blur(10px);
+}
+
+[data-theme='dark'] .section {
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.section-header h3 {
+    margin: 0 0 4px 0;
+}
+
+.section-header .subtitle {
+    margin: 0;
+}
+
+.secondary-section {
+    /* distinct style if needed */
+}
+
+.mood-detail-list-scroll {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.mood-chip.secondary.selected {
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.done-btn {
+    width: 100%;
+    margin-top: 16px;
+}
