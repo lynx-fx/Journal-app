@@ -17,6 +17,11 @@
         <h2>@(EntryDate.ToShortDateString())</h2>
     </div>
 
+    <!-- Title Input -->
+    <div class="title-input-container">
+        <input class="title-input" placeholder="Title your day..." @bind="CurrentJournal.Title" />
+    </div>
+
     <!-- Mood Summary Card -->
     <div class="mood-summary-card" @onclick="NavigateToMoods">
         <div class="primary-mood">

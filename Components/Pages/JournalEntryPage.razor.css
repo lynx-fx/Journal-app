@@ -4,6 +4,34 @@
     line-height: 1;
 }
 
+/* Title Input */
+.title-input-container {
+    margin-bottom: 20px;
+}
+
+.title-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.title-input:focus {
+    border-color: var(--primary-color);
+}
+
+.title-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+    font-weight: 400;
+}
+
 /* Section Headers */
 .section-header {
     display: flex;

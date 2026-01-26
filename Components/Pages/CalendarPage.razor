@@ -151,6 +151,10 @@
                             <span class="mood">@GetMoodEmoji(entry.Mood)</span>
                         </div>
                         <div class="timeline-preview">
+                            @if (!string.IsNullOrEmpty(entry.Title))
+                            {
+                                <div style="font-weight:600; margin-bottom:4px; font-size:1.05em; color:var(--text-primary);">@entry.Title</div>
+                            }
                             @* Strip HTML for preview *@
                             @(GetPreviewText(entry.Content))
                         </div>

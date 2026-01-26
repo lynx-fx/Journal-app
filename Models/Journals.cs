@@ -10,6 +10,8 @@ public class Journals
     [Unique]
     public DateTime Date { get; set; }
 
+    public string Title { get; set; } = string.Empty;
+
     public String Content { get; set; } = String.Empty;
 
     // moods
