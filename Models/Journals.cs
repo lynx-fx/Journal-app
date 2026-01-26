@@ -12,19 +12,10 @@ public class Journals
 
     public String Content { get; set; } = String.Empty;
 
-    // Primary mood
+    // moods
     public Moods Mood { get; set; }
-
-    // secondary 1st mood
-    public Moods? SecondaryMoodOne { get; set; }
-
-    // secondary 2nd mood
-    public Moods? SecondaryMoodTwo { get; set; }
-
     public int? MoodDetailId { get; set; }
-    
     public int? SecondaryMoodDetailId1 { get; set; }
-    public int? SecondaryMoodDetailId2 { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdateAt { get; set; }

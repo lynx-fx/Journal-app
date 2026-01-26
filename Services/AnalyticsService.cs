@@ -159,7 +159,6 @@ public class AnalyticsService : IAnalyticsService
         {
             if (j.MoodDetailId.HasValue) AddCount(counts, j.MoodDetailId.Value);
             if (j.SecondaryMoodDetailId1.HasValue) AddCount(counts, j.SecondaryMoodDetailId1.Value);
-            if (j.SecondaryMoodDetailId2.HasValue) AddCount(counts, j.SecondaryMoodDetailId2.Value);
         }
 
         var stats = counts.Select(kvp => 
@@ -233,9 +232,9 @@ public class AnalyticsService : IAnalyticsService
                                 .Where(j => j.Date >= startDate)
                                 .ToListAsync();
 
-        // Group actual data
+        // Group actual data for Average
         var groupedData = journals.GroupBy(j => j.Date.Date)
-                                  .ToDictionary(g => g.Key, g => g.Sum(j => CountWords(j.Content)));
+                                  .ToDictionary(g => g.Key, g => (int)Math.Round(g.Average(j => CountWords(j.Content))));
 
         // Build continuous list
         var result = new List<KeyValuePair<DateTime, int>>();
@@ -258,5 +257,36 @@ public class AnalyticsService : IAnalyticsService
         plain = plain.Replace("&nbsp;", " ");
         
         return plain.Split(new[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
+    }
+
+    public async Task<List<TagStat>> GetTagBreakdownAsync()
+    {
+        await Init();
+        var allJournalsCount = await _db.Database.Table<Journals>().CountAsync();
+        if (allJournalsCount == 0) return new List<TagStat>();
+
+        var journalTags = await _db.Database.Table<JournalTags>().ToListAsync();
+        var tags = await _db.Database.Table<Tags>().ToListAsync();
+
+        var tagCounts = journalTags.GroupBy(jt => jt.TagId)
+                                   .Select(g => new { TagId = g.Key, Count = g.Count() })
+                                   .ToList();
+
+        var paramsList = new List<TagStat>();
+        foreach(var tc in tagCounts)
+        {
+            var t = tags.FirstOrDefault(x => x.Id == tc.TagId);
+            if (t != null)
+            {
+                paramsList.Add(new TagStat
+                {
+                    Name = t.Name,
+                    Count = tc.Count,
+                    Percentage = Math.Round((double)tc.Count / allJournalsCount * 100, 1)
+                });
+            }
+        }
+
+        return paramsList.OrderByDescending(x => x.Percentage).ToList();
     }
 }

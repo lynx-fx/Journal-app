@@ -31,4 +31,12 @@ public interface IAnalyticsService
     Task<List<MoodDetailStat>> GetTopMoodDetailsAsync();
     Task<List<KeyValuePair<string, int>>> GetTopTagsAsync();
     Task<List<KeyValuePair<DateTime, int>>> GetWordCountTrendAsync(int days = 30);
+    Task<List<TagStat>> GetTagBreakdownAsync();
+}
+
+public class TagStat
+{
+    public string Name { get; set; } = string.Empty;
+    public int Count { get; set; }
+    public double Percentage { get; set; } // % of total entries that have this tag
 }

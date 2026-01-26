@@ -1,5 +1,6 @@
 @page "/"
 @using JournalApp.Services
+@using JournalApp.Models
 @inject IAnalyticsService AnalyticsService
 @inject NavigationManager NavManager
 
@@ -50,17 +51,20 @@
         <!-- Mood Distribution -->
         <div class="card mood-breakdown-card">
              <h3>Mood Distribution</h3>
-             <div class="mood-bars">
-                 @foreach (var m in MoodDist)
-                 {
-                     <div class="mood-bar-row">
-                         <span class="mood-cat-label">@m.Category</span>
-                         <div class="progress-bg">
-                             <div class="progress-fill @m.Category.ToString().ToLower()" style="width: @m.Percentage%;"></div>
+             <div class="mood-chart-container">
+                 <div class="pie-chart" style="@PieChartStyle">
+                     <div class="pie-hole"></div>
+                 </div>
+                 <div class="pie-legend">
+                     @foreach (var m in MoodDist)
+                     {
+                         <div class="legend-item">
+                             <div class="legend-dot @m.Category.ToString().ToLower()"></div>
+                             <span class="legend-label">@m.Category</span>
+                             <span class="legend-percent">@m.Percentage%</span>
                          </div>
-                         <span class="mood-percent">@m.Percentage%</span>
-                     </div>
-                 }
+                     }
+                 </div>
              </div>
         </div>
         
@@ -90,9 +94,27 @@
             </div>
         </div>
         
+         <!-- Tag Breakdown -->
+        <div class="card tag-breakdown-card">
+             <h3>Tag Breakdown</h3>
+             <div class="mood-bars">
+                 @foreach (var t in TagBreakdown)
+                 {
+                     <div class="mood-bar-row">
+                         <span class="mood-cat-label" style="width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@t.Name</span>
+                         <div class="progress-bg">
+                             <!-- Using a distinct color for tags, or primary color -->
+                             <div class="progress-fill" style="width: @t.Percentage%; background: var(--primary-color);"></div>
+                         </div>
+                         <span class="mood-percent">@t.Percentage%</span>
+                     </div>
+                 }
+             </div>
+        </div>
+        
          <!-- Word Count Trend -->
         <div class="card trend-card">
-            <h3>Word Volume</h3>
+            <h3>Average Words per Entry</h3>
             <div class="trend-bars">
                @foreach (var w in WordTrend)
                {
@@ -100,6 +122,7 @@
                     if (w.Value > 0 && h < 4) h = 4; // Min height 4px
                     
                     <div class="trend-bar-col" title="@w.Key.ToString("MMM dd"): @w.Value words">
+                        <span class="trend-val">@w.Value</span>
                         <div class="trend-bar" style="height: @(h)px;"></div>
                         <span class="trend-date">@w.Key.ToString("dd")</span>
                     </div>
@@ -113,8 +136,10 @@
     private bool IsLoading = true;
     private StreakData Streak { get; set; } = new();
     private List<MoodStats> MoodDist { get; set; } = new();
+    private string PieChartStyle { get; set; } = string.Empty;
     private List<MoodDetailStat> TopMoods { get; set; } = new();
     private List<KeyValuePair<string, int>> TopTags { get; set; } = new();
+    private List<TagStat> TagBreakdown { get; set; } = new();
     private List<KeyValuePair<DateTime, int>> WordTrend { get; set; } = new();
     private int MaxWordCount = 1;
 
@@ -124,8 +149,10 @@
         
         Streak = await AnalyticsService.GetStreakDataAsync();
         MoodDist = await AnalyticsService.GetMoodDistributionAsync();
+        CalculatePieChart();
         TopMoods = await AnalyticsService.GetTopMoodDetailsAsync();
         TopTags = await AnalyticsService.GetTopTagsAsync();
+        TagBreakdown = await AnalyticsService.GetTagBreakdownAsync();
         WordTrend = await AnalyticsService.GetWordCountTrendAsync(14); // Last 2 weeks
         
         if (WordTrend.Any()) MaxWordCount = WordTrend.Max(x => x.Value);
@@ -136,5 +163,43 @@
     private void GoBack()
     {
         NavManager.NavigateTo("/");
+    }
+    private void CalculatePieChart()
+    {
+        if (!MoodDist.Any()) 
+        {
+            PieChartStyle = "background: conic-gradient(#e2e8f0 0% 100%);";
+            return;
+        }
+
+        var positive = MoodDist.FirstOrDefault(x => x.Category == Moods.Positive)?.Percentage ?? 0;
+        var neutral = MoodDist.FirstOrDefault(x => x.Category == Moods.Neutral)?.Percentage ?? 0;
+        var negative = MoodDist.FirstOrDefault(x => x.Category == Moods.Negative)?.Percentage ?? 0;
+        
+        // Colors corresponding to css
+        // Positive: #4ADE80
+        // Neutral: #94A3B8
+        // Negative: #F87171
+
+        double currentPos = 0;
+        var parts = new List<string>();
+
+        if (positive > 0)
+        {
+            parts.Add($"#4ADE80 {currentPos}% {currentPos + positive}%");
+            currentPos += positive;
+        }
+        if (neutral > 0)
+        {
+            parts.Add($"#94A3B8 {currentPos}% {currentPos + neutral}%");
+            currentPos += neutral;
+        }
+        if (negative > 0)
+        {
+            parts.Add($"#F87171 {currentPos}% {currentPos + negative}%");
+            currentPos += negative;
+        }
+
+        PieChartStyle = $"background: conic-gradient({string.Join(", ", parts)});";
     }
 }

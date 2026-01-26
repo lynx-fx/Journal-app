@@ -100,6 +100,17 @@ public class JournalsServices : IJournalsServices
              var journalsQuery = $"SELECT * FROM Journals WHERE Id IN ({journalIdsString}) ORDER BY Date DESC";
              return await _appDatabase.Database.QueryAsync<Journals>(journalsQuery);
         }
+        else if (filterType == "Date")
+        {
+             if (DateTime.TryParse(query, out var date))
+             {
+                 var start = date.Date;
+                 var end = date.Date.AddDays(1).AddTicks(-1);
+                 return await _appDatabase.Database.Table<Journals>()
+                              .Where(j => j.Date >= start && j.Date <= end)
+                              .ToListAsync();
+             }
+        }
 
         return new List<Journals>();
     }

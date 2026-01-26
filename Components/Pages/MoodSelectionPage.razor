@@ -109,7 +109,6 @@
             // Usually switching category implies different set of moods. Let's clear to be safe/clean.
             CurrentJournal.MoodDetailId = null;
             CurrentJournal.SecondaryMoodDetailId1 = null;
-            CurrentJournal.SecondaryMoodDetailId2 = null; // Ensure unused one is clear
             
             await LoadMoodsForCategory(category);
         }
