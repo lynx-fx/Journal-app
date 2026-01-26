@@ -2,7 +2,9 @@
 @using JournalApp.Models
 @using JournalApp.Services
 @inject IJournalsServices JournalsService
+@inject IPdfService PdfService
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
 <style>
     .search-container {
@@ -35,6 +37,44 @@
         color: #666;
         font-size: 1.2em;
         padding: 0 8px;
+    }
+    .export-btn {
+        padding: 8px 16px;
+        background-color: #6200ea;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-left: auto;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .export-btn:hover {
+        background-color: #3700b3;
+    }
+    .checkbox-col {
+        display: flex; align-items: center; justify-content: center; width: 40px;
+    }
+    .custom-checkbox {
+        width: 20px; height: 20px; cursor: pointer;
+    }
+    
+    /* Modal */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 1000;
+    }
+    .modal-content {
+        background: white; padding: 20px; border-radius: 12px;
+        width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .modal-actions {
+        margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px;
     }
 </style>
 
@@ -75,10 +115,24 @@
                 {
                     <button class="clear-btn" @onclick="ClearSearch">✖</button>
                 }
+                <button class="export-btn" @onclick="InitiateExport">
+                    <span>Export Selected (@SelectedJournalIds.Count)</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                    </svg>
+                </button>
             </div>
             @foreach (var entry in TimelineEntries)
             {
-                <div class="timeline-card" @onclick="() => OpenJournal(entry.Date)">
+                <div class="timeline-card" style="display: flex; flex-direction: row; gap: 8px;">
+                    <div class="checkbox-col" @onclick:stopPropagation>
+                        <input type="checkbox" class="custom-checkbox" 
+                               checked="@SelectedJournalIds.Contains(entry.Id)" 
+                               @onchange="() => ToggleSelection(entry.Id)" />
+                    </div>
+                    
+                    <div style="flex:1; display:flex; gap:16px;" @onclick="() => OpenJournal(entry.Date)">
                     <div class="timeline-date">
                         <span class="day">@entry.Date.Day</span>
                         <span class="month">@entry.Date.ToString("MMM")</span>
@@ -92,6 +146,7 @@
                             @* Strip HTML for preview *@
                             @(GetPreviewText(entry.Content))
                         </div>
+                    </div>
                     </div>
                 </div>
             }
@@ -137,6 +192,21 @@
         </div>
     }
 </div>
+
+@if (ShowPasswordModal)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <h3>Export PDF</h3>
+            <p>Enter a password to protect this file (optional):</p>
+            <input type="password" @bind="PdfPassword" class="search-input" style="width: 100%; margin-top: 8px;" placeholder="Password" />
+            <div class="modal-actions">
+                <button class="btn btn-secondary" @onclick="CancelExport">Cancel</button>
+                <button class="btn btn-primary" @onclick="ConfirmExportPdf">Download</button>
+            </div>
+        </div>
+    </div>
+}
 
 
 
@@ -250,5 +320,53 @@
         if (string.IsNullOrWhiteSpace(htmlContent)) return "No content...";
         // Simple strip tags for preview
         return System.Text.RegularExpressions.Regex.Replace(htmlContent, "<.*?>", String.Empty);
+    }
+
+    private HashSet<int> SelectedJournalIds { get; set; } = new HashSet<int>();
+    private bool ShowPasswordModal { get; set; } = false;
+    private string PdfPassword { get; set; } = "";
+
+    private void ToggleSelection(int id)
+    {
+        if (SelectedJournalIds.Contains(id))
+            SelectedJournalIds.Remove(id);
+        else
+            SelectedJournalIds.Add(id);
+    }
+
+    private void InitiateExport()
+    {
+        if (!SelectedJournalIds.Any())
+        {
+            // If none selected, maybe select all? Or warn?
+            // "export as pdf for the selected journals only" -> implies user should select.
+            // Let's warn.
+            // Using JS Alert for simplicity or just return
+             JSRuntime.InvokeVoidAsync("alert", "Please select at least one journal to export.");
+            return;
+        }
+        
+        PdfPassword = "";
+        ShowPasswordModal = true;
+    }
+
+    private void CancelExport()
+    {
+        ShowPasswordModal = false;
+    }
+
+    private async Task ConfirmExportPdf()
+    {
+        ShowPasswordModal = false;
+        
+        // Get Selected Journals
+        var journalsToExport = JournalEntries.Where(j => SelectedJournalIds.Contains(j.Id)).OrderByDescending(j => j.Date).ToList();
+        
+        // Generate PDF
+        var pdfBytes = PdfService.GenerateJournalPdf(journalsToExport, PdfPassword, "My Journal Export");
+        
+        // Download
+        var fileName = $"journal_export_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
+        await JSRuntime.InvokeVoidAsync("downloadFile", fileName, "application/pdf", pdfBytes);
     }
 }

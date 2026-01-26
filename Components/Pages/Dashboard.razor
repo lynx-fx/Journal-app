@@ -18,7 +18,7 @@
         <!-- Streak Card -->
         <div class="card streak-card">
             <div class="streak-visual">
-                <span class="fire-icon">🔥</span>
+                <!-- Fire icon removed -->
                 <span class="streak-count">@Streak.CurrentStreak</span>
                 <span class="streak-label">Day Streak</span>
             </div>
@@ -71,7 +71,7 @@
                 @foreach (var item in TopMoods)
                 {
                     <div class="top-item">
-                        <span class="top-emoji">@item.Emoji</span>
+                        <!-- Emoji removed -->
                         <span class="top-name">@item.Name</span>
                         <span class="top-count">@item.Count</span>
                     </div>
@@ -96,13 +96,13 @@
             <div class="trend-bars">
                @foreach (var w in WordTrend)
                {
-                   var h = MaxWordCount > 0 ? (w.Value / (double)MaxWordCount) * 100 : 0;
-                   if (h < 5) h = 5; 
-                   
-                   <div class="trend-bar-col" title="@w.Key.ToString("MMM dd"): @w.Value words">
-                       <div class="trend-bar" style="height: @h%;"></div>
-                       <span class="trend-date">@w.Key.ToString("dd")</span>
-                   </div>
+                    var h = MaxWordCount > 0 ? (w.Value / (double)MaxWordCount) * 80 : 0;
+                    if (w.Value > 0 && h < 4) h = 4; // Min height 4px
+                    
+                    <div class="trend-bar-col" title="@w.Key.ToString("MMM dd"): @w.Value words">
+                        <div class="trend-bar" style="height: @(h)px;"></div>
+                        <span class="trend-date">@w.Key.ToString("dd")</span>
+                    </div>
                }
             </div>
         </div>

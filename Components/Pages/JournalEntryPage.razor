@@ -20,7 +20,7 @@
     <!-- Mood Summary Card -->
     <div class="mood-summary-card" @onclick="NavigateToMoods">
         <div class="primary-mood">
-            <span class="emoji">@CategoryEmoji</span>
+            <!-- Emoji removed -->
             <div class="mood-info">
                 <span class="label">@CurrentJournal.Mood.ToString()</span>
                 <span class="value">@GetMoodDetailsString()</span>
@@ -196,13 +196,13 @@
     private string GetMoodDetailsString()
     {
         var names = new List<string>();
-        if (Detail1 != null) names.Add($"{Detail1.Emoji} {Detail1.Name}");
-        if (Detail2 != null) names.Add($"{Detail2.Emoji} {Detail2.Name}");
+        if (Detail1 != null) names.Add($"{Detail1.Name}");
+        if (Detail2 != null) names.Add($"{Detail2.Name}");
         
         return names.Any() ? string.Join(", ", names) : "Select details...";
     }
 
-    [Inject] IMoodsService MoodsService { get; set; }
+    [Inject] IMoodsService MoodsService { get; set; } = default!;
 
     private void NavigateToMoods()
     {

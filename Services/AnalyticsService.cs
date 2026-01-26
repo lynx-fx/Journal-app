@@ -197,6 +197,7 @@ public class AnalyticsService : IAnalyticsService
         var journalTags = await _db.Database.Table<JournalTags>().ToListAsync();
         var tags = await _db.Database.Table<Tags>().ToListAsync();
         
+        // Fetch top tags but take more than 5 initially to account for potential missing tag definitions
         var topTags = journalTags.GroupBy(jt => jt.TagId)
                                  .Select(g => new 
                                  { 
@@ -204,7 +205,6 @@ public class AnalyticsService : IAnalyticsService
                                      Count = g.Count() 
                                  })
                                  .OrderByDescending(x => x.Count)
-                                 .Take(5)
                                  .ToList();
 
         var result = new List<KeyValuePair<string, int>>();
@@ -215,6 +215,7 @@ public class AnalyticsService : IAnalyticsService
             {
                 result.Add(new KeyValuePair<string, int>(tag.Name, t.Count));
             }
+            if (result.Count >= 5) break;
         }
         return result;
     }
@@ -222,26 +223,40 @@ public class AnalyticsService : IAnalyticsService
     public async Task<List<KeyValuePair<DateTime, int>>> GetWordCountTrendAsync(int days = 30)
     {
         await Init();
-        var cutoff = DateTime.Today.AddDays(-days);
+        
+        var endDate = DateTime.Today;
+        // Start from days-1 ago to include today
+        var startDate = endDate.AddDays(-(days - 1)); 
+        
+        // Fetch journals within range
         var journals = await _db.Database.Table<Journals>()
-                                .Where(j => j.Date >= cutoff)
+                                .Where(j => j.Date >= startDate)
                                 .ToListAsync();
 
-        return journals.OrderBy(j => j.Date)
-                       .Select(j => new KeyValuePair<DateTime, int>(
-                           j.Date, 
-                           CountWords(j.Content)
-                       ))
-                       .ToList();
+        // Group actual data
+        var groupedData = journals.GroupBy(j => j.Date.Date)
+                                  .ToDictionary(g => g.Key, g => g.Sum(j => CountWords(j.Content)));
+
+        // Build continuous list
+        var result = new List<KeyValuePair<DateTime, int>>();
+        for (int i = 0; i < days; i++)
+        {
+            var d = startDate.AddDays(i);
+            var count = groupedData.ContainsKey(d) ? groupedData[d] : 0;
+            result.Add(new KeyValuePair<DateTime, int>(d, count));
+        }
+
+        return result;
     }
 
     private int CountWords(string content)
     {
         if (string.IsNullOrWhiteSpace(content)) return 0;
-        // Simple word count: strip HTML tags if any?
-        // Content might be HTML from editor.
-        // Basic approximation: split by space.
-        // Ideally strip metadata.
-        return content.Split(new[] { ' ', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length;
+
+        // Strip HTML
+        var plain = System.Text.RegularExpressions.Regex.Replace(content, "<[^>]+>", " ");
+        plain = plain.Replace("&nbsp;", " ");
+        
+        return plain.Split(new[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
     }
 }
