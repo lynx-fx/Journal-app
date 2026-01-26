@@ -21,19 +21,20 @@ public class AnalyticsService : IAnalyticsService
     {
         await Init();
         var allDates = (await _db.Database.Table<Journals>().ToListAsync())
-                       .Select(j => j.Date.Date)
-                       .Distinct()
-                       .OrderByDescending(d => d)
-                       .ToList();
+            .Select(j => j.Date.Date)
+            .Distinct()
+            .OrderByDescending(d => d)
+            .ToList();
 
         var data = new StreakData { TotalEntries = allDates.Count };
 
-        if (!allDates.Any()) return data;
+        if (!allDates.Any())
+            return data;
 
         // Calculate Current Streak
         int currentStreak = 0;
         var checkDate = DateTime.Today;
-        
+
         // If today is not in list, check if yesterday is in list (streak active but not updated today)
         if (!allDates.Contains(checkDate))
         {
@@ -48,25 +49,27 @@ public class AnalyticsService : IAnalyticsService
                 {
                     currentStreak = 0;
                 }
-                else 
+                else
                 {
                     // Starts counting from this valid entry
                 }
             }
             else
             {
-                 // No entry today or yesterday -> Streak 0
-                 currentStreak = 0;
+                // No entry today or yesterday -> Streak 0
+                currentStreak = 0;
             }
         }
 
         // Simple iteration for current streak
         // We iterate backwards from the most recent valid streak date.
         // Actually simpler: Just iterate the sorted dates and check gaps.
-        
+
         var mostRecent = allDates.First();
-        bool isStreakActive = (mostRecent == DateTime.Today || mostRecent == DateTime.Today.AddDays(-1));
-        
+        bool isStreakActive = (
+            mostRecent == DateTime.Today || mostRecent == DateTime.Today.AddDays(-1)
+        );
+
         if (isStreakActive)
         {
             currentStreak = 1;
@@ -103,11 +106,13 @@ public class AnalyticsService : IAnalyticsService
                 }
                 else
                 {
-                    if (tempStreak > maxStreak) maxStreak = tempStreak;
+                    if (tempStreak > maxStreak)
+                        maxStreak = tempStreak;
                     tempStreak = 1;
                 }
             }
-            if (tempStreak > maxStreak) maxStreak = tempStreak;
+            if (tempStreak > maxStreak)
+                maxStreak = tempStreak;
         }
         data.LongestStreak = maxStreak;
 
@@ -128,18 +133,20 @@ public class AnalyticsService : IAnalyticsService
     {
         await Init();
         var allJournals = await _db.Database.Table<Journals>().ToListAsync();
-        if (!allJournals.Any()) return new List<MoodStats>();
+        if (!allJournals.Any())
+            return new List<MoodStats>();
 
         var total = allJournals.Count;
-        var grouped = allJournals.GroupBy(j => j.Mood)
-                                 .Select(g => new MoodStats
-                                 {
-                                     Category = g.Key,
-                                     Count = g.Count(),
-                                     Percentage = Math.Round((double)g.Count() / total * 100, 1)
-                                 })
-                                 .OrderByDescending(x => x.Count)
-                                 .ToList();
+        var grouped = allJournals
+            .GroupBy(j => j.Mood)
+            .Select(g => new MoodStats
+            {
+                Category = g.Key,
+                Count = g.Count(),
+                Percentage = Math.Round((double)g.Count() / total * 100, 1),
+            })
+            .OrderByDescending(x => x.Count)
+            .ToList();
         return grouped;
     }
 
@@ -148,41 +155,47 @@ public class AnalyticsService : IAnalyticsService
         await Init();
         // This requires joining or fetching separately. SQLite-net doesn't do complex joins easily.
         // We'll fetch all journals and all mood details.
-        
+
         var journals = await _db.Database.Table<Journals>().ToListAsync();
         var details = await _db.Database.Table<MoodDetail>().ToListAsync();
-        
+
         // Count usage of Details (Primary + Secondary1 + Secondary2)
         var counts = new Dictionary<int, int>();
-        
+
         foreach (var j in journals)
         {
-            if (j.MoodDetailId.HasValue) AddCount(counts, j.MoodDetailId.Value);
-            if (j.SecondaryMoodDetailId1.HasValue) AddCount(counts, j.SecondaryMoodDetailId1.Value);
+            if (j.PrimaryMoodDetailId.HasValue)
+                AddCount(counts, j.PrimaryMoodDetailId.Value);
+            if (j.SecondaryMoodDetailId.HasValue)
+                AddCount(counts, j.SecondaryMoodDetailId.Value);
         }
 
-        var stats = counts.Select(kvp => 
-        {
-            var d = details.FirstOrDefault(x => x.Id == kvp.Key);
-            return d == null ? null : new MoodDetailStat 
-            { 
-                Name = d.Name, 
-                Emoji = d.Emoji, 
-                Count = kvp.Value 
-            };
-        })
-        .Where(x => x != null)
-        .Select(x => x!)
-        .OrderByDescending(x => x.Count)
-        .Take(5)
-        .ToList();
+        var stats = counts
+            .Select(kvp =>
+            {
+                var d = details.FirstOrDefault(x => x.Id == kvp.Key);
+                return d == null
+                    ? null
+                    : new MoodDetailStat
+                    {
+                        Name = d.Name,
+                        Emoji = d.Emoji,
+                        Count = kvp.Value,
+                    };
+            })
+            .Where(x => x != null)
+            .Select(x => x!)
+            .OrderByDescending(x => x.Count)
+            .Take(5)
+            .ToList();
 
         return stats;
     }
 
     private void AddCount(Dictionary<int, int> dict, int id)
     {
-        if (!dict.ContainsKey(id)) dict[id] = 0;
+        if (!dict.ContainsKey(id))
+            dict[id] = 0;
         dict[id]++;
     }
 
@@ -190,21 +203,18 @@ public class AnalyticsService : IAnalyticsService
     {
         await Init();
         // Since JournalTags is many-to-many, we fetch distinct tag IDs from JournalTags table?
-        // Wait, JournalTags links JournalId and TagId. 
+        // Wait, JournalTags links JournalId and TagId.
         // We want Top Used Tags.
-        
+
         var journalTags = await _db.Database.Table<JournalTags>().ToListAsync();
         var tags = await _db.Database.Table<Tags>().ToListAsync();
-        
+
         // Fetch top tags but take more than 5 initially to account for potential missing tag definitions
-        var topTags = journalTags.GroupBy(jt => jt.TagId)
-                                 .Select(g => new 
-                                 { 
-                                     TagId = g.Key, 
-                                     Count = g.Count() 
-                                 })
-                                 .OrderByDescending(x => x.Count)
-                                 .ToList();
+        var topTags = journalTags
+            .GroupBy(jt => jt.TagId)
+            .Select(g => new { TagId = g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToList();
 
         var result = new List<KeyValuePair<string, int>>();
         foreach (var t in topTags)
@@ -214,7 +224,8 @@ public class AnalyticsService : IAnalyticsService
             {
                 result.Add(new KeyValuePair<string, int>(tag.Name, t.Count));
             }
-            if (result.Count >= 5) break;
+            if (result.Count >= 5)
+                break;
         }
         return result;
     }
@@ -222,19 +233,21 @@ public class AnalyticsService : IAnalyticsService
     public async Task<List<KeyValuePair<DateTime, int>>> GetWordCountTrendAsync(int days = 30)
     {
         await Init();
-        
+
         var endDate = DateTime.Today;
         // Start from days-1 ago to include today
-        var startDate = endDate.AddDays(-(days - 1)); 
-        
+        var startDate = endDate.AddDays(-(days - 1));
+
         // Fetch journals within range
-        var journals = await _db.Database.Table<Journals>()
-                                .Where(j => j.Date >= startDate)
-                                .ToListAsync();
+        var journals = await _db
+            .Database.Table<Journals>()
+            .Where(j => j.Date >= startDate)
+            .ToListAsync();
 
         // Group actual data for Average
-        var groupedData = journals.GroupBy(j => j.Date.Date)
-                                  .ToDictionary(g => g.Key, g => (int)Math.Round(g.Average(j => CountWords(j.Content))));
+        var groupedData = journals
+            .GroupBy(j => j.Date.Date)
+            .ToDictionary(g => g.Key, g => (int)Math.Round(g.Average(j => CountWords(j.Content))));
 
         // Build continuous list
         var result = new List<KeyValuePair<DateTime, int>>();
@@ -250,40 +263,47 @@ public class AnalyticsService : IAnalyticsService
 
     private int CountWords(string content)
     {
-        if (string.IsNullOrWhiteSpace(content)) return 0;
+        if (string.IsNullOrWhiteSpace(content))
+            return 0;
 
         // Strip HTML
         var plain = System.Text.RegularExpressions.Regex.Replace(content, "<[^>]+>", " ");
         plain = plain.Replace("&nbsp;", " ");
-        
-        return plain.Split(new[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
+
+        return plain
+            .Split(new[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+            .Length;
     }
 
     public async Task<List<TagStat>> GetTagBreakdownAsync()
     {
         await Init();
         var allJournalsCount = await _db.Database.Table<Journals>().CountAsync();
-        if (allJournalsCount == 0) return new List<TagStat>();
+        if (allJournalsCount == 0)
+            return new List<TagStat>();
 
         var journalTags = await _db.Database.Table<JournalTags>().ToListAsync();
         var tags = await _db.Database.Table<Tags>().ToListAsync();
 
-        var tagCounts = journalTags.GroupBy(jt => jt.TagId)
-                                   .Select(g => new { TagId = g.Key, Count = g.Count() })
-                                   .ToList();
+        var tagCounts = journalTags
+            .GroupBy(jt => jt.TagId)
+            .Select(g => new { TagId = g.Key, Count = g.Count() })
+            .ToList();
 
         var paramsList = new List<TagStat>();
-        foreach(var tc in tagCounts)
+        foreach (var tc in tagCounts)
         {
             var t = tags.FirstOrDefault(x => x.Id == tc.TagId);
             if (t != null)
             {
-                paramsList.Add(new TagStat
-                {
-                    Name = t.Name,
-                    Count = tc.Count,
-                    Percentage = Math.Round((double)tc.Count / allJournalsCount * 100, 1)
-                });
+                paramsList.Add(
+                    new TagStat
+                    {
+                        Name = t.Name,
+                        Count = tc.Count,
+                        Percentage = Math.Round((double)tc.Count / allJournalsCount * 100, 1),
+                    }
+                );
             }
         }
 

@@ -14,10 +14,9 @@ public class Journals
 
     // moods
     public Moods Mood { get; set; }
-    public int? MoodDetailId { get; set; }
-    public int? SecondaryMoodDetailId1 { get; set; }
+    public int? PrimaryMoodDetailId { get; set; }
+    public int? SecondaryMoodDetailId { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdateAt { get; set; }
-
 }
