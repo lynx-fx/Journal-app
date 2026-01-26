@@ -107,9 +107,8 @@
             // Clear details when switching category? 
             // User might want to keep "Happy" if they accidentally clicked Neutral?
             // Usually switching category implies different set of moods. Let's clear to be safe/clean.
-            CurrentJournal.MoodDetailId = null;
-            CurrentJournal.SecondaryMoodDetailId1 = null;
-            CurrentJournal.SecondaryMoodDetailId2 = null; // Ensure unused one is clear
+            CurrentJournal.PrimaryMoodDetailId = null;
+            CurrentJournal.SecondaryMoodDetailId = null;
             
             await LoadMoodsForCategory(category);
         }
@@ -122,43 +121,43 @@
 
     private bool IsSelected(int id)
     {
-        return CurrentJournal.MoodDetailId == id || CurrentJournal.SecondaryMoodDetailId1 == id;
+        return CurrentJournal.PrimaryMoodDetailId == id || CurrentJournal.SecondaryMoodDetailId == id;
     }
 
     private void ToggleMood(int id)
     {
         // 1. Check if already selected -> Remove
-        if (CurrentJournal.MoodDetailId == id)
+        if (CurrentJournal.PrimaryMoodDetailId == id)
         {
-            CurrentJournal.MoodDetailId = null;
+            CurrentJournal.PrimaryMoodDetailId = null;
             // Shift secondary to primary to avoid gaps? Not strictly necessary but cleaner UI often.
-            if (CurrentJournal.SecondaryMoodDetailId1 != null)
+            if (CurrentJournal.SecondaryMoodDetailId != null)
             {
-                CurrentJournal.MoodDetailId = CurrentJournal.SecondaryMoodDetailId1;
-                CurrentJournal.SecondaryMoodDetailId1 = null;
+                CurrentJournal.PrimaryMoodDetailId = CurrentJournal.SecondaryMoodDetailId;
+                CurrentJournal.SecondaryMoodDetailId = null;
             }
             return;
         }
-        if (CurrentJournal.SecondaryMoodDetailId1 == id)
+        if (CurrentJournal.SecondaryMoodDetailId == id)
         {
-            CurrentJournal.SecondaryMoodDetailId1 = null;
+            CurrentJournal.SecondaryMoodDetailId = null;
             return;
         }
 
         // 2. Add (if slots available)
-        if (CurrentJournal.MoodDetailId == null)
+        if (CurrentJournal.PrimaryMoodDetailId == null)
         {
-            CurrentJournal.MoodDetailId = id;
+            CurrentJournal.PrimaryMoodDetailId = id;
         }
-        else if (CurrentJournal.SecondaryMoodDetailId1 == null)
+        else if (CurrentJournal.SecondaryMoodDetailId == null)
         {
-            CurrentJournal.SecondaryMoodDetailId1 = id;
+            CurrentJournal.SecondaryMoodDetailId = id;
         }
         else
         {
             // Full (2 selected). Replace logic? or Denial?
             // Let's Replace the second one (FIFOish or override) for smoother UX than blocking.
-            CurrentJournal.SecondaryMoodDetailId1 = id; 
+            CurrentJournal.SecondaryMoodDetailId = id; 
         }
     }
     

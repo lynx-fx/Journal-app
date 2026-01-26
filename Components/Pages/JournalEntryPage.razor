@@ -17,6 +17,11 @@
         <h2>@(EntryDate.ToShortDateString())</h2>
     </div>
 
+    <!-- Title Input -->
+    <div class="title-input-container">
+        <input class="title-input" placeholder="Title your day..." @bind="CurrentJournal.Title" />
+    </div>
+
     <!-- Mood Summary Card -->
     <div class="mood-summary-card" @onclick="NavigateToMoods">
         <div class="primary-mood">
@@ -200,13 +205,13 @@
             AvailableTags = await TagsService.GetTagsAsync();
             
             // Load Moods (Detail 1 and Detail 2)
-            if (CurrentJournal.MoodDetailId.HasValue)
-                Detail1 = await MoodsService.GetMoodByIdAsync(CurrentJournal.MoodDetailId.Value);
+            if (CurrentJournal.PrimaryMoodDetailId.HasValue)
+                Detail1 = await MoodsService.GetMoodByIdAsync(CurrentJournal.PrimaryMoodDetailId.Value);
             else 
                 Detail1 = null;
             
-            if (CurrentJournal.SecondaryMoodDetailId1.HasValue)
-                Detail2 = await MoodsService.GetMoodByIdAsync(CurrentJournal.SecondaryMoodDetailId1.Value);
+            if (CurrentJournal.SecondaryMoodDetailId.HasValue)
+                Detail2 = await MoodsService.GetMoodByIdAsync(CurrentJournal.SecondaryMoodDetailId.Value);
             else
                 Detail2 = null;
 
