@@ -239,6 +239,8 @@
 
     private async Task OnSearchDateChanged()
     {
+        // LOGIC: Automatically trigger search when date changes.
+        // Convert strict Date to string format expected by the service for unified filtering interface.
         if (SearchDate.HasValue)
         {
             SearchQuery = SearchDate.Value.ToString("yyyy-MM-dd");
@@ -268,6 +270,8 @@
 
     private async Task ClearSearch()
     {
+        // LOGIC: Reset everything - query, date picker, and pagination.
+        // Reload all entries from scratch to restore the full timeline view.
         SearchQuery = "";
         SearchDate = null;
         CurrentPage = 0;

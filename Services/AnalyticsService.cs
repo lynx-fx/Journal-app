@@ -40,9 +40,10 @@ public class AnalyticsService : IAnalyticsService
         {
             if (allDates.Contains(checkDate.AddDays(-1)))
             {
-                // Streak is arguably alive if they did it yesterday, usually allowed in apps
+                // LOGIC: Streak is arguably alive if they did it yesterday, usually allowed in apps
                 // But calculation starts from most recent entry
                 checkDate = allDates.First(); // Should be yesterday or earlier
+
                 // However, strictly speaking, if checkDate (yesterday) is in list, we start counting backwards from it.
                 // If the most recent entry is older than yesterday, streak is broken -> 0.
                 if (checkDate < DateTime.Today.AddDays(-1))
@@ -51,7 +52,7 @@ public class AnalyticsService : IAnalyticsService
                 }
                 else
                 {
-                    // Starts counting from this valid entry
+                    // Starts counting from this valid entry (yesterday)
                 }
             }
             else
@@ -290,6 +291,8 @@ public class AnalyticsService : IAnalyticsService
             .Select(g => new { TagId = g.Key, Count = g.Count() })
             .ToList();
 
+        // LOGIC: Calculate percentage relative to Total Journals, not Total Tags.
+        // This answers "What % of my journals mentions 'Work'?" rather than "What % of my tags are 'Work'?"
         var paramsList = new List<TagStat>();
         foreach (var tc in tagCounts)
         {
