@@ -112,7 +112,27 @@ public class JournalsServices : IJournalsServices
         }
         else if (filterType == "Date")
         {
-            if (DateTime.TryParse(query, out var date))
+            // Try strictly parsing ISO date from the calendar input first
+            if (
+                DateTime.TryParseExact(
+                    query,
+                    "yyyy-MM-dd",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None,
+                    out var isoDate
+                )
+            )
+            {
+                var start = isoDate.Date;
+                // End of that specific day
+                var end = isoDate.Date.AddDays(1).AddTicks(-1);
+                return await _appDatabase
+                    .Database.Table<Journals>()
+                    .Where(j => j.Date >= start && j.Date <= end)
+                    .ToListAsync();
+            }
+            // Fallback to general parsing
+            else if (DateTime.TryParse(query, out var date))
             {
                 var start = date.Date;
                 var end = date.Date.AddDays(1).AddTicks(-1);

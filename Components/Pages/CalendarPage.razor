@@ -98,6 +98,7 @@
         <div class="view-toggle">
             <button class="toggle-option @(!IsListView ? "active" : "")" @onclick="() => SetView(false)">Calendar</button>
             <button class="toggle-option @(IsListView ? "active" : "")" @onclick="() => SetView(true)">List</button>
+            <a href="settings" class="toggle-option" style="text-decoration:none;">Settings</a>
         </div>
     </div>
 
@@ -117,7 +118,7 @@
                 }
                 else
                 {
-                    <input @bind="SearchQuery" @bind:event="oninput" @onkeyup="HandleSearchInput" placeholder="Search..." class="search-input" />
+                    <input value="@SearchQuery" @onchange="@(e => { SearchQuery = e.Value?.ToString() ?? ""; PerformSearch(); })" placeholder="Search..." class="search-input" />
                 }
                 @if (!string.IsNullOrWhiteSpace(SearchQuery))
                 {
