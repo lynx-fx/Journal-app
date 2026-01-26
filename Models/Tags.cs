@@ -9,4 +9,6 @@ public class Tags
 
     [Unique]
     public String Name {get; set;}
+
+    public bool IsPrebuilt { get; set; } = false;
 }

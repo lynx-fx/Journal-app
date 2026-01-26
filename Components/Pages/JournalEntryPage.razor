@@ -20,7 +20,7 @@
     <!-- Mood Summary Card -->
     <div class="mood-summary-card" @onclick="NavigateToMoods">
         <div class="primary-mood">
-            <!-- Emoji removed -->
+            <span class="mood-emoji-large">@CategoryEmoji</span>
             <div class="mood-info">
                 <span class="label">@CurrentJournal.Mood.ToString()</span>
                 <span class="value">@GetMoodDetailsString()</span>
@@ -54,6 +54,16 @@
     </div>
 
     <div class="tags-section">
+        <div class="section-header">
+            <h3>Tags</h3>
+            <button class="add-tag-btn-icon" @onclick="() => ShowAddTag = !ShowAddTag">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
+                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                  <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                </svg>
+            </button>
+        </div>
+
         <div class="tags-list">
             @foreach (var tag in SelectedTags)
             {
@@ -63,16 +73,46 @@
                 </span>
             }
         </div>
-        <div class="tag-input-container">
-            <input @bind="NewTagName" @bind:event="oninput" @onkeyup="HandleTagInputKeyUp" placeholder="Add a tag..." class="tag-input" list="availableTags" />
-            <datalist id="availableTags">
-                @foreach (var tag in AvailableTags)
-                {
-                    <option value="@tag.Name" />
-                }
-            </datalist>
-            <button class="btn btn-secondary add-tag-btn" @onclick="AddTag">Add</button>
-        </div>
+
+        @if (ShowAddTag)
+        {
+            <div class="tag-selector-overlay">
+                <div class="tag-create-row">
+                    <input @bind="NewTagName" @bind:event="oninput" @onkeyup="HandleTagInputKeyUp" placeholder="Tag Name" class="tag-input" />
+                    <button class="btn btn-sm btn-primary" @onclick="AddTag">Add</button>
+                </div>
+
+                <div class="tag-categories">
+                    <div class="tag-category">
+                        <h4>Suggested</h4>
+                        <div class="tag-cloud">
+                             @foreach (var tag in AvailableTags.Where(t => t.IsPrebuilt))
+                             {
+                                 <button class="tag-choice @(IsTagSelected(tag) ? "selected" : "")" @onclick="() => ToggleTag(tag)">
+                                     <span>@tag.Name</span>
+                                 </button>
+                             }
+                        </div>
+                    </div>
+                    
+                    <div class="tag-category">
+                        <h4>My Tags</h4>
+                        <div class="tag-cloud">
+                             @foreach (var tag in AvailableTags.Where(t => !t.IsPrebuilt))
+                             {
+                                 <button class="tag-choice @(IsTagSelected(tag) ? "selected" : "")" @onclick="() => ToggleTag(tag)">
+                                     <span>@tag.Name</span>
+                                 </button>
+                             }
+                             @if (!AvailableTags.Any(t => !t.IsPrebuilt))
+                             {
+                                 <span class="text-muted small">No custom tags yet.</span>
+                             }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
     </div>
 
     <div class="actions">
@@ -97,7 +137,8 @@
     private List<Tags> SelectedTags { get; set; } = new List<Tags>();
     private List<Tags> AvailableTags { get; set; } = new List<Tags>();
     private string NewTagName { get; set; } = string.Empty;
-    
+    private bool ShowAddTag { get; set; } = false;
+
     private ElementReference EditorRef;
     private bool _shouldRefreshEditor;
 
@@ -227,6 +268,24 @@
         };
     }
     
+    private bool IsTagSelected(Tags tag)
+    {
+        return SelectedTags.Any(t => t.Id == tag.Id);
+    }
+    
+    private void ToggleTag(Tags tag)
+    {
+        var existing = SelectedTags.FirstOrDefault(t => t.Id == tag.Id);
+        if (existing != null)
+        {
+            SelectedTags.Remove(existing);
+        }
+        else
+        {
+            SelectedTags.Add(tag);
+        }
+    }
+
     private async Task AddTag()
     {
         if (string.IsNullOrWhiteSpace(NewTagName)) return;
@@ -244,13 +303,21 @@
         var tag = await TagsService.GetTagByNameAsync(tagName);
         if (tag == null)
         {
-            tag = new Tags { Name = tagName };
+            tag = new Tags 
+            { 
+                Name = tagName, 
+                IsPrebuilt = false
+            };
             await TagsService.SaveTagAsync(tag);
             // Refresh available tags
             AvailableTags = await TagsService.GetTagsAsync();
         }
 
-        SelectedTags.Add(tag);
+        if (!IsTagSelected(tag))
+        {
+            SelectedTags.Add(tag);
+        }
+        
         NewTagName = string.Empty;
     }
 

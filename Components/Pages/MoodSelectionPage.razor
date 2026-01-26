@@ -51,11 +51,11 @@
                 </button>
             </div>
             
-             @if (ShowAddMood)
+            @if (ShowAddMood)
             {
                 <div class="add-mood-inline" style="margin-bottom: 16px;">
                     <input class="mini-input" @bind="NewMoodName" placeholder="Name" />
-                    <!-- Emoji input removed -->
+                    <input class="mini-input mood-emoji-input" @bind="NewMoodEmoji" placeholder="Emoji" maxlength="2" />
                     <button class="btn-mini-save" @onclick="AddNewMood">Save</button>
                 </div>
             }
@@ -65,7 +65,7 @@
                 {
                     <button class="mood-chip @(IsSelected(mood.Id) ? "selected" : "")" 
                             @onclick="() => ToggleMood(mood.Id)">
-                        <!-- Emoji removed -->
+                        <span class="mood-emoji">@mood.Emoji</span>
                         <span class="mood-name">@mood.Name</span>
                     </button>
                 }

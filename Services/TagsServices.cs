@@ -19,29 +19,47 @@ public class TagsServices : ITagsServices
         
         var prebuiltTags = new List<string> 
         { 
-            "Work", "Career", "Studies", "Family", "Friends", "Relationships", 
-            "Health", "Fitness", "Personal Growth", "Self-care", "Hobbies", "Travel", "Nature", 
-            "Finance", "Spirituality", "Birthday", "Holiday", "Vacation", "Celebration", "Exercise", 
-            "Reading", "Writing", "Cooking", "Meditation", "Yoga", "Music", "Shopping", 
-            "Parenting", "Projects", "Planning", "Reflection" 
+            "Work", "Career", "Studies", "Family", "Friends", 
+            "Relationships", "Health", "Fitness", "Personal Growth", "Self-care", 
+            "Hobbies", "Travel", "Nature", "Finance", "Spirituality", 
+            "Birthday", "Holiday", "Vacation", "Celebration", "Exercise", 
+            "Reading", "Writing", "Cooking", "Meditation", "Yoga", 
+            "Music", "Shopping", "Parenting", "Projects", "Planning", 
+            "Reflection" 
         };
 
-        // Check which ones are missing
+        // Check which ones are missing or need update
         var existingTags = await _appDatabase.Database.Table<Tags>().ToListAsync();
-        var existingTagNames = existingTags.Select(t => t.Name.ToLower()).ToHashSet();
+        var existingTagMap = existingTags.ToDictionary(t => t.Name.ToLower(), t => t);
 
-        var tagsToAdd = new List<Tags>();
-        foreach (var tagName in prebuiltTags)
+        var tagsToInsert = new List<Tags>();
+        var tagsToUpdate = new List<Tags>();
+
+        foreach (var name in prebuiltTags)
         {
-            if (!existingTagNames.Contains(tagName.ToLower()))
+            if (existingTagMap.TryGetValue(name.ToLower(), out var existingTag))
             {
-                tagsToAdd.Add(new Tags { Name = tagName });
+                // Update existing prebuilt tags if they lack correct flag
+                if (!existingTag.IsPrebuilt)
+                {
+                    existingTag.IsPrebuilt = true;
+                    tagsToUpdate.Add(existingTag);
+                }
+            }
+            else
+            {
+                tagsToInsert.Add(new Tags { Name = name, IsPrebuilt = true });
             }
         }
 
-        if (tagsToAdd.Any())
+        if (tagsToInsert.Any())
         {
-            await _appDatabase.Database.InsertAllAsync(tagsToAdd);
+            await _appDatabase.Database.InsertAllAsync(tagsToInsert);
+        }
+        
+        if (tagsToUpdate.Any())
+        {
+            await _appDatabase.Database.UpdateAllAsync(tagsToUpdate);
         }
     }
 
