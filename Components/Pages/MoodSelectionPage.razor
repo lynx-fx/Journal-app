@@ -51,11 +51,11 @@
                 </button>
             </div>
             
-             @if (ShowAddMood)
+            @if (ShowAddMood)
             {
                 <div class="add-mood-inline" style="margin-bottom: 16px;">
                     <input class="mini-input" @bind="NewMoodName" placeholder="Name" />
-                    <input class="mini-input emoji-input" @bind="NewMoodEmoji" placeholder="😊" />
+                    <input class="mini-input mood-emoji-input" @bind="NewMoodEmoji" placeholder="Emoji" maxlength="2" />
                     <button class="btn-mini-save" @onclick="AddNewMood">Save</button>
                 </div>
             }
@@ -86,7 +86,7 @@
     // Add Mood Logic
     private bool ShowAddMood = false;
     private string NewMoodName = "";
-    private string NewMoodEmoji = "🙂";
+    private string NewMoodEmoji = "";
 
     protected override async Task OnParametersSetAsync()
     {

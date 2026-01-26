@@ -23,6 +23,7 @@ public static class MauiProgram
         builder.Services.AddScoped<JournalApp.Services.IUsersService, JournalApp.Services.UsersService>();
         builder.Services.AddScoped<JournalApp.Services.IMoodsService, JournalApp.Services.MoodsService>();
         builder.Services.AddScoped<JournalApp.Services.IAnalyticsService, JournalApp.Services.AnalyticsService>();
+        builder.Services.AddScoped<JournalApp.Services.IPdfService, JournalApp.Services.PdfService>();
 
 #if DEBUG
 		builder.Services.AddBlazorWebViewDeveloperTools();
