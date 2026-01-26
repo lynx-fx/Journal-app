@@ -40,6 +40,7 @@ public class JournalsServices : IJournalsServices
     public async Task<Journals> GetJournalAsync(DateTime date)
     {
         await Init();
+        // LOGIC: Calculate start and end of the specific date to capture any time on that day.
         var startOfDay = date.Date;
         var endOfDay = startOfDay.AddDays(1).AddTicks(-1);
 
@@ -78,6 +79,7 @@ public class JournalsServices : IJournalsServices
         }
         else if (filterType == "Tags")
         {
+            // LOGIC: Tag Search is a 3-step process because of the Many-to-Many relationship (Journal <-> JournalTags <-> Tags).
             // 1. Find Tag Ids matching name
             var tags = await _appDatabase
                 .Database.Table<Tags>()
@@ -90,10 +92,8 @@ public class JournalsServices : IJournalsServices
             var tagIds = tags.Select(t => t.Id).ToList();
 
             // 2. Find Journal Ids from JournalTags
-            // SQLite-net-pcl doesn't support complex Contains with lists well in linq-to-sql sometimes,
-            // but let's try standard approach or use raw query if needed.
-            // Raw query is often safer for "IN" clauses with list of ints.
-
+            // LOGIC: Using Raw SQL for 'IN' clause because LINQ-to-SQL in SQLite-net-pcl has limitations with List.Contains() for complex queries.
+            // This ensures we get all JournalEntryIds that have ANY of the matching TagIds.
             var tagIdsString = string.Join(",", tagIds);
             var querySql = $"SELECT * FROM JournalTags WHERE TagId IN ({tagIdsString})";
             var journalTags = await _appDatabase.Database.QueryAsync<JournalTags>(querySql);
@@ -104,7 +104,7 @@ public class JournalsServices : IJournalsServices
                 return new List<Journals>();
 
             // 3. Fetch Journals
-            // Again, "IN" clause with raw query or multiple fetches.
+            // LOGIC: Final fetch using Raw SQL again for the IN clause on Journal Ids.
             var journalIdsString = string.Join(",", journalIds);
             var journalsQuery =
                 $"SELECT * FROM Journals WHERE Id IN ({journalIdsString}) ORDER BY Date DESC";
