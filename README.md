@@ -49,6 +49,9 @@ Journal App is a cross-platform application that helps you track your daily thou
    ```
    *(Note: Target framework may vary based on your setup)*
 
+### Default password: 1234
+
+
 ## 📂 Project Structure
 - **/Components**: Blazor UI components and pages (Dashboard, JournalEntry, MoodSelection, etc.)
 - **/Services**: Core business logic and data access services (JournalServices, MoodServices, etc.)
