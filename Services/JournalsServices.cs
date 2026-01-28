@@ -55,46 +55,66 @@ public class JournalsServices : IJournalsServices
         await Init();
 
         string lowerQuery = query.ToLower();
+        string fuzzyQuery = $"%{lowerQuery}%";
 
         if (filterType == "Content")
         {
-            return await _appDatabase
-                .Database.Table<Journals>()
-                .Where(j => j.Content.Contains(query) || j.Title.Contains(query))
-                .OrderByDescending(j => j.Date)
-                .ToListAsync();
+            // Use Raw SQL for reliable case-insensitive LIKE
+            return await _appDatabase.Database.QueryAsync<Journals>(
+                "SELECT * FROM Journals WHERE lower(Content) LIKE ? OR lower(Title) LIKE ? ORDER BY Date DESC", 
+                fuzzyQuery, fuzzyQuery);
         }
         else if (filterType == "Mood")
         {
-            // flexible parsing
+            var matchingJournals = new List<Journals>();
+
+            // 1. Enum Search (Primary Category)
+            // Just check exact match on the Enum string representation first (e.g. "Positive")
             if (Enum.TryParse<Moods>(query, true, out var mood))
             {
-                return await _appDatabase
+                var enumMatches = await _appDatabase
                     .Database.Table<Journals>()
                     .Where(j => j.Mood == mood)
                     .OrderByDescending(j => j.Date)
                     .ToListAsync();
+                matchingJournals.AddRange(enumMatches);
             }
-            return new List<Journals>();
+
+            // 2. Detail Search (Secondary Moods) using SQL for join/subselect logic implicitly by ID
+            // Find detail IDs first
+            var matchingDetails = await _appDatabase.Database.QueryAsync<MoodDetail>(
+                "SELECT * FROM MoodDetail WHERE lower(Name) LIKE ?", fuzzyQuery);
+
+            if (matchingDetails.Any())
+            {
+                var detailIds = matchingDetails.Select(m => m.Id).ToList();
+                var idsStr = string.Join(",", detailIds);
+                
+                var detailMatches = await _appDatabase.Database.QueryAsync<Journals>(
+                    $"SELECT * FROM Journals WHERE PrimaryMoodDetailId IN ({idsStr}) OR SecondaryMoodDetailId IN ({idsStr}) ORDER BY Date DESC");
+                
+                matchingJournals.AddRange(detailMatches);
+            }
+
+            return matchingJournals
+                .GroupBy(j => j.Id)
+                .Select(g => g.First())
+                .OrderByDescending(j => j.Date)
+                .ToList();
         }
         else if (filterType == "Tags")
         {
-            // LOGIC: Tag Search is a 3-step process because of the Many-to-Many relationship (Journal <-> JournalTags <-> Tags).
-            // 1. Find Tag Ids matching name
-            var tags = await _appDatabase
-                .Database.Table<Tags>()
-                .Where(t => t.Name.Contains(query))
-                .ToListAsync();
+            // 1. Find Tag Ids
+            var tags = await _appDatabase.Database.QueryAsync<Tags>(
+                "SELECT * FROM Tags WHERE lower(Name) LIKE ?", fuzzyQuery);
 
             if (!tags.Any())
                 return new List<Journals>();
 
             var tagIds = tags.Select(t => t.Id).ToList();
+            var tagIdsString = string.Join(",", tagIds);
 
             // 2. Find Journal Ids from JournalTags
-            // LOGIC: Using Raw SQL for 'IN' clause because LINQ-to-SQL in SQLite-net-pcl has limitations with List.Contains() for complex queries.
-            // This ensures we get all JournalEntryIds that have ANY of the matching TagIds.
-            var tagIdsString = string.Join(",", tagIds);
             var querySql = $"SELECT * FROM JournalTags WHERE TagId IN ({tagIdsString})";
             var journalTags = await _appDatabase.Database.QueryAsync<JournalTags>(querySql);
 
@@ -104,34 +124,22 @@ public class JournalsServices : IJournalsServices
                 return new List<Journals>();
 
             // 3. Fetch Journals
-            // LOGIC: Final fetch using Raw SQL again for the IN clause on Journal Ids.
             var journalIdsString = string.Join(",", journalIds);
-            var journalsQuery =
-                $"SELECT * FROM Journals WHERE Id IN ({journalIdsString}) ORDER BY Date DESC";
+            var journalsQuery = $"SELECT * FROM Journals WHERE Id IN ({journalIdsString}) ORDER BY Date DESC";
             return await _appDatabase.Database.QueryAsync<Journals>(journalsQuery);
         }
         else if (filterType == "Date")
         {
-            // Try strictly parsing ISO date from the calendar input first
-            if (
-                DateTime.TryParseExact(
-                    query,
-                    "yyyy-MM-dd",
-                    System.Globalization.CultureInfo.InvariantCulture,
-                    System.Globalization.DateTimeStyles.None,
-                    out var isoDate
-                )
-            )
+            // Same date logic as before
+            if (DateTime.TryParseExact(query, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var isoDate))
             {
                 var start = isoDate.Date;
-                // End of that specific day
                 var end = isoDate.Date.AddDays(1).AddTicks(-1);
                 return await _appDatabase
                     .Database.Table<Journals>()
                     .Where(j => j.Date >= start && j.Date <= end)
                     .ToListAsync();
             }
-            // Fallback to general parsing
             else if (DateTime.TryParse(query, out var date))
             {
                 var start = date.Date;
